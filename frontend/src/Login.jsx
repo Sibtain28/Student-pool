@@ -9,7 +9,8 @@ export default function Login() {
     e.preventDefault();
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
-        email, password
+        email,
+        password,
       });
       alert("Login success!");
       console.log(res.data.token);
@@ -19,10 +20,21 @@ export default function Login() {
   };
 
   return (
-    <form onSubmit={submit}>
-      <input placeholder="Email" onChange={(e)=>setEmail(e.target.value)} />
-      <input placeholder="Password" type="password" onChange={(e)=>setPassword(e.target.value)} />
-      <button>Login</button>
+    <form className="auth-card" onSubmit={submit}>
+      <h2>Login</h2>
+      <input
+        placeholder="Email"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <input
+        placeholder="Password"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <button type="submit">Login</button>
     </form>
   );
 }
