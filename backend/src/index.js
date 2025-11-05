@@ -8,16 +8,27 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const app = express();
 
+const FRONTEND_URL = "https://student-pool.vercel.app"; 
+const JWT_SECRET = process.env.JWT_SECRET;
+
 
 app.use(cors({
-  origin: "https://student-pool.vercel.app", 
-  credentials: true
+  origin: FRONTEND_URL,
+  credentials: true,
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"]
 }));
 
 
+app.options("*", cors({
+  origin: FRONTEND_URL,
+  credentials: true,
+}));
+
 app.use(express.json());
 
-const JWT_SECRET = process.env.JWT_SECRET;
+
+app.get("/", (req, res) => res.json({ message: "Backend is running" }));
 
 
 app.post("/api/auth/signup", async (req, res) => {
@@ -27,6 +38,7 @@ app.post("/api/auth/signup", async (req, res) => {
     const user = await prisma.user.create({
       data: { email, password: hashed, name },
     });
+
     const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
     res.json({ token });
   } catch (err) {
@@ -45,9 +57,8 @@ app.post("/api/auth/login", async (req, res) => {
   if (!valid) return res.status(400).json({ message: "Invalid credentials" });
 
   const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
-
   res.json({ token });
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log("Backend running on PORT", PORT));
+app.listen(PORT, () => console.log(`Backend running on PORT ${PORT}`));
