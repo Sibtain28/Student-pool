@@ -10,9 +10,10 @@ const app = express();
 
 
 app.use(cors({
-  origin: "https://your-vercel-frontend.vercel.app",
+  origin: "https://student-pool.vercel.app", 
   credentials: true
 }));
+
 
 app.use(express.json());
 
