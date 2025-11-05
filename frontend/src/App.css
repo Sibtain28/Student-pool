@@ -1,16 +1,16 @@
-/* Global */
+
 body {
   margin: 0;
   font-family: 'Montserrat', sans-serif;
-  background-color: #0d0d0d; /* black background */
-  color: #ffffff; /* white text */
+  background-color: #0d0d0d; 
+  color: #ffffff; 
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* App Title */
+
 h1 {
   font-size: 2rem;
   margin-bottom: 1.5rem;
@@ -18,9 +18,9 @@ h1 {
   text-align: center;
 }
 
-/* Container */
+
 .auth-container {
-  background-color: #1a1a1a; /* dark grey card */
+  background-color: #1a1a1a; 
   padding: 2rem 2.5rem;
   border-radius: 12px;
   box-shadow: 0 8px 25px rgba(0,0,0,0.7);
@@ -30,7 +30,7 @@ h1 {
   align-items: center;
 }
 
-/* Tab buttons */
+
 .tab-switcher {
   display: flex;
   width: 100%;
@@ -61,7 +61,7 @@ h1 {
   background: #3a3a3a;
 }
 
-/* Form card */
+
 .auth-card {
   width: 100%;
   display: flex;
@@ -75,7 +75,7 @@ h1 {
   text-align: center;
 }
 
-/* Inputs */
+
 .auth-card input {
   width: 100%;
   padding: 0.65rem;
@@ -99,7 +99,7 @@ h1 {
   background-color: #0d0d0d;
 }
 
-/* Buttons */
+
 .auth-card button {
   width: 100%;
   padding: 0.7rem;
@@ -119,7 +119,7 @@ h1 {
   box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
 
-/* Form footer */
+
 .auth-card .form-footer {
   margin-top: 0.8rem;
   font-size: 0.85rem;
@@ -137,7 +137,7 @@ h1 {
   text-decoration: underline;
 }
 
-/* Responsive */
+
 @media (max-width: 400px) {
   .auth-container {
     width: 90%;

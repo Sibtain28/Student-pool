@@ -8,7 +8,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const app = express();
 
-// CORS - only allow your Vercel frontend
+
 app.use(cors({
   origin: "https://your-vercel-frontend.vercel.app",
   credentials: true
@@ -18,7 +18,7 @@ app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Signup
+
 app.post("/api/auth/signup", async (req, res) => {
   const { email, password, name } = req.body;
   try {
@@ -33,7 +33,7 @@ app.post("/api/auth/signup", async (req, res) => {
   }
 });
 
-// Login
+
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
 
