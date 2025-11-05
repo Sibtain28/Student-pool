@@ -11,6 +11,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const cors = require('cors');
+app.use(cors({
+  origin: ['https://student-pool.onrender.com'],
+  credentials: true
+}));
+
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // Signup
