@@ -9,22 +9,21 @@ const path = require("path");
 const prisma = new PrismaClient();
 const app = express();
 
-// JWT secret
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // Allowed frontend origins
 const allowedOrigins = [
-  "http://localhost:5174",            // Local dev
-  "https://student-pool.vercel.app",  // Main Vercel deployment
-  "https://student-pool-8o7p.vercel.app" // Any other Vercel preview deployment
+  "http://localhost:5174", // local dev
+  "https://student-pool.vercel.app", // main Vercel frontend
+  "https://student-pool-8o7p.vercel.app" // any other deployed preview
 ];
 
 // CORS middleware
 app.use(cors({
   origin: function(origin, callback) {
-    // allow requests with no origin (like Postman)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
+    // allow requests with no origin (Postman, server-to-server)
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1) {
       return callback(new Error("CORS not allowed"), false);
     }
     return callback(null, true);
@@ -34,7 +33,13 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"]
 }));
 
-// Parse JSON bodies
+// Preflight handler for all routes
+app.options("*", cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
+// JSON parser
 app.use(express.json());
 
 // Health check route
@@ -60,13 +65,12 @@ app.post("/api/auth/signup", async (req, res) => {
 // Login route
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
-
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    if(!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(400).json({ message: "Invalid credentials" });
+    if(!valid) return res.status(400).json({ message: "Invalid credentials" });
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
     res.json({ token });
@@ -76,15 +80,12 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-/* ========================
-   Serve React Frontend
-   ======================== */
-const frontendPath = path.join(__dirname, "../frontend/dist");
-app.use(express.static(frontendPath));
+// Wildcard route to serve frontend SPA
+// Make sure your frontend build is in `public` folder
+app.use(express.static(path.join(__dirname, "public")));
 
-// Catch-all route to serve index.html (SPA)
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // Start server
