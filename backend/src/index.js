@@ -4,6 +4,7 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
+const path = require("path");
 
 const prisma = new PrismaClient();
 const app = express();
@@ -33,17 +34,11 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"]
 }));
 
-// Handle preflight OPTIONS request
-app.options("*", cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
-
 // Parse JSON bodies
 app.use(express.json());
 
 // Health check route
-app.get("/", (req, res) => res.json({ message: "Backend is running" }));
+app.get("/api/health", (req, res) => res.json({ message: "Backend is running" }));
 
 // Signup route
 app.post("/api/auth/signup", async (req, res) => {
@@ -79,6 +74,17 @@ app.post("/api/auth/login", async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
+});
+
+/* ========================
+   Serve React Frontend
+   ======================== */
+const frontendPath = path.join(__dirname, "../frontend/dist");
+app.use(express.static(frontendPath));
+
+// Catch-all route to serve index.html (SPA)
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 // Start server
