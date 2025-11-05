@@ -8,15 +8,13 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const app = express();
 
-app.use(cors());
-app.use(express.json());
-
-const cors = require('cors');
+// CORS - only allow your Vercel frontend
 app.use(cors({
-  origin: ['https://student-pool.onrender.com'],
+  origin: "https://your-vercel-frontend.vercel.app",
   credentials: true
 }));
 
+app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -28,9 +26,7 @@ app.post("/api/auth/signup", async (req, res) => {
     const user = await prisma.user.create({
       data: { email, password: hashed, name },
     });
-
     const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
-
     res.json({ token });
   } catch (err) {
     res.status(400).json({ message: "Email already exists" });
@@ -42,10 +38,10 @@ app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return res.status(400).json({ message: "Invalid creds" });
+  if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
   const valid = await bcrypt.compare(password, user.password);
-  if (!valid) return res.status(400).json({ message: "Invalid creds" });
+  if (!valid) return res.status(400).json({ message: "Invalid credentials" });
 
   const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
 
