@@ -13,16 +13,21 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, navigate]);
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
+
   return (
-    <div className="auth-container">
-      <div className="brand">
-        <h1 className="brand-title">Student Pool</h1>
-        <p className="brand-sub">Welcome to your Dashboard</p>
-      </div>
-      <div className="auth-card">
-        <h2>Dashboard</h2>
-        <p>This is a protected page. Only logged-in users can see this.</p>
-      </div>
+    <div className="dashboard-container">
+      <header className="dashboard-header">
+        <div className="dashboard-title">Student Carpool</div>
+        <button className="logout-button" onClick={handleLogout}>Logout</button>
+      </header>
+      <main className="dashboard-main">
+        <h1>Welcome to the Dashboard</h1>
+        <p>We are excited to have you here. Explore and connect with your peers!</p>
+      </main>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -13,8 +15,7 @@ export default function Login() {
         password,
       });
       localStorage.setItem("token", res.data.token);
-      console.log(res.data.token);
-      alert("Login success!");
+      navigate("/dashboard"); // Redirect to dashboard
     } catch (err) {
       alert("Login failed!");
     }
