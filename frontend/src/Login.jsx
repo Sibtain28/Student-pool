@@ -8,12 +8,11 @@ export default function Login() {
   const submit = async (e) => {
     e.preventDefault();
     try {
-      // const res = await axios.post(`http://localhost:4000/api/auth/login`, {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
-      email,
-      password,
+        email,
+        password,
       });
-      localStorage.setItem("token", res.data.token)
+      localStorage.setItem("token", res.data.token);
       console.log(res.data.token);
       alert("Login success!");
     } catch (err) {
@@ -22,21 +21,31 @@ export default function Login() {
   };
 
   return (
-    <form className="auth-card" onSubmit={submit}>
-      <h2>Login</h2>
-      <input
-        placeholder="Email"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        placeholder="Password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button type="submit">Login</button>
-    </form>
+    <div className="auth-container">
+      <div className="brand">
+        <h1 className="brand-title">Student Pool</h1>
+        <p className="brand-sub">Connect with peers & opportunities</p>
+      </div>
+
+      <form className="auth-card" onSubmit={submit}>
+        <h2>Sign in</h2>
+        <input
+          placeholder="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          placeholder="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button type="submit">Sign in</button>
+        <div className="form-footer">
+          <span>Need an account?</span> <a href="/signup">Sign up</a>
+        </div>
+      </form>
+    </div>
   );
 }

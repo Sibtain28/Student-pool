@@ -22,27 +22,37 @@ export default function Signup() {
   };
 
   return (
-    <form className="auth-card" onSubmit={submit}>
-      <h2>Signup</h2>
-      <input
-        placeholder="Name"
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input
-        placeholder="Email"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        placeholder="Password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button type="submit">Signup</button>
-    </form>
+    <div className="auth-container">
+      <div className="brand">
+        <h1 className="brand-title">Student Pool</h1>
+        <p className="brand-sub">Create your account and get started</p>
+      </div>
+
+      <form className="auth-card" onSubmit={submit}>
+        <h2>Create account</h2>
+        <input
+          placeholder="Full name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          placeholder="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          placeholder="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button type="submit">Create account</button>
+        <div className="form-footer">
+          <span>Already have an account?</span> <a href="/login">Sign in</a>
+        </div>
+      </form>
+    </div>
   );
 }
