@@ -15,6 +15,7 @@ export default function Login() {
         password,
       });
       localStorage.setItem("token", res.data.token);
+      console.log("Token stored in localStorage:", localStorage.getItem("token")); // Debugging token storage
       navigate("/dashboard"); // Redirect to dashboard
     } catch (err) {
       alert("Login failed!");
