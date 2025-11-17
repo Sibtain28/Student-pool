@@ -14,11 +14,16 @@ export default function Login() {
         email,
         password,
       });
-      localStorage.setItem("token", res.data.token);
-      console.log("Token stored in localStorage:", localStorage.getItem("token")); // Debugging token storage
-      navigate("/dashboard"); // Redirect to dashboard
+
+      if (res.data && res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        console.log("Token stored in localStorage:", localStorage.getItem("token")); // Debugging token storage
+        navigate("/dashboard"); // Redirect to dashboard
+      } else {
+        alert("Login failed: No token received.");
+      }
     } catch (err) {
-      alert("Login failed!");
+      alert("Login failed! Please check your credentials and try again.");
     }
   };
 
