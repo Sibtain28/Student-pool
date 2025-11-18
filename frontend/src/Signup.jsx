@@ -1,7 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -9,15 +11,16 @@ export default function Signup() {
   const submit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/signup`, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/signup`, {
         name,
         email,
         password,
       });
-      alert("Signup successful!");
-      console.log(res.data.token);
+
+      alert("Signup successful! Please login.");
+      navigate("/login", { replace: true }); // SPA redirect
     } catch (err) {
-      alert("Signup failed!");
+      alert(err.response?.data?.message || "Signup failed!");
     }
   };
 

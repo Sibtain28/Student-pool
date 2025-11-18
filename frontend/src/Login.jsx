@@ -15,15 +15,14 @@ export default function Login() {
         password,
       });
 
-      if (res.data && res.data.token) {
+      if (res.data?.token) {
         localStorage.setItem("token", res.data.token);
-        console.log("Token stored in localStorage:", localStorage.getItem("token")); // Debugging token storage
-        navigate("/dashboard"); // Redirect to dashboard
+        navigate("/dashboard", { replace: true });
       } else {
         alert("Login failed: No token received.");
       }
     } catch (err) {
-      alert("Login failed! Please check your credentials and try again.");
+      alert(err.response?.data?.message || "Login failed! Check credentials.");
     }
   };
 
