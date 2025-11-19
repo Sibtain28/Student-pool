@@ -9,20 +9,27 @@ export default function Login() {
 
   const submit = async (e) => {
     e.preventDefault();
+
+    if (!email || !password) {
+      alert("Please enter both email and password.");
+      return;
+    }
+
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
         email,
         password,
       });
 
-      if (res.data?.token) {
+      if (res.data && res.data.token) {
         localStorage.setItem("token", res.data.token);
-        navigate("/dashboard", { replace: true });
+        console.log("Token stored in localStorage:", localStorage.getItem("token")); // Debugging token storage
+        navigate("/dashboard"); // Redirect to dashboard
       } else {
         alert("Login failed: No token received.");
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed! Check credentials.");
+      alert("Login failed! Please check your credentials and try again.");
     }
   };
 

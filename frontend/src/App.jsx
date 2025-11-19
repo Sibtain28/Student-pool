@@ -5,21 +5,30 @@ import Dashboard from "./Dashboard";
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
-  if (!token) return <Navigate to="/login" replace />;
-  return children;
+  return token ? children : <Navigate to="/login" replace />;
 }
 
-function App() {
+export default function App() {
   return (
     <Routes>
       <Route
         path="/signup"
-        element={localStorage.getItem("token") ? <Navigate to="/dashboard" replace /> : <Signup />}
+        element={
+          <PublicOnly>
+            <Signup />
+          </PublicOnly>
+        }
       />
+
       <Route
         path="/login"
-        element={localStorage.getItem("token") ? <Navigate to="/dashboard" replace /> : <Login />}
+        element={
+          <PublicOnly>
+            <Login />
+          </PublicOnly>
+        }
       />
+
       <Route
         path="/dashboard"
         element={
@@ -28,9 +37,13 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
 
-export default App;
+function PublicOnly({ children }) {
+  const token = localStorage.getItem("token");
+  return token ? <Navigate to="/dashboard" replace /> : children;
+}
