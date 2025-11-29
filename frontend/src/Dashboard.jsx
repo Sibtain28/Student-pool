@@ -39,26 +39,36 @@ export default function Dashboard() {
         </div>
 
         <nav className="dashboard-nav">
-          <button className="nav-item">
-            <span className="nav-icon"></span>
-            Find Rides
-          </button>
-          <button className="nav-item">
+          <button className="nav-item" onClick={() => navigate("/find-rides")}>
+  Find Rides
+</button>
+
+          {/* ⬇️ UPDATED */}
+          <button
+            className="nav-item"
+            onClick={() => navigate("/create-ride")}
+          >
             <span className="nav-icon"></span>
             Create
           </button>
-          <button className="nav-item">
-            <span className="nav-icon"></span>
-            My Rides
-          </button>
-          <button className="nav-item notification-btn">
-            <span className="nav-icon"></span>
-            Notifications
-          </button>
-          <button className="nav-item">
-            <span className="nav-icon"></span>
-            Profile
-          </button>
+
+          <button 
+    className="nav-item"
+    onClick={() => navigate("/my-rides")}
+  >
+    <span className="nav-icon"></span>
+    My Rides
+  </button>
+          <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
+              Notifications
+            </button>
+          <button 
+  className="nav-item"
+  onClick={() => navigate("/profile")}
+>
+  <span className="nav-icon"></span>
+  Profile
+</button>
           <button className="nav-item logout-btn" onClick={handleLogout}>
             <span className="nav-icon"></span>
             Logout
@@ -82,10 +92,17 @@ export default function Dashboard() {
         </p>
 
         <div className="hero-buttons">
-          <button className="hero-btn primary">
+          <button className="hero-btn primary" onClick={() => navigate("/find-rides")}>
             Browse Rides <span className="arrow">→</span>
           </button>
-          <button className="hero-btn secondary">Create a Ride</button>
+
+          {/* ⬇️ UPDATED */}
+          <button
+            className="hero-btn secondary"
+            onClick={() => navigate("/create-ride")}
+          >
+            Create a Ride
+          </button>
         </div>
       </main>
 
@@ -125,15 +142,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="feature-box">
-            <div className="feature-icon">
-              <span>🚗</span>
-            </div>
-            <h3 className="feature-title">Easy Booking</h3>
-            <p className="feature-description">
-              Find and book rides in just a few clicks.
-            </p>
-          </div>
+          
         </div>
       </section>
 
@@ -145,7 +154,9 @@ export default function Dashboard() {
             <span className="footer-title">Student Pool</span>
           </div>
           <p className="footer-tagline">Making student travel affordable and fun</p>
-          <p className="footer-copyright">© 2025 Student Pool. All rights reserved.</p>
+          <p className="footer-copyright">
+            © 2025 Student Pool. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>
