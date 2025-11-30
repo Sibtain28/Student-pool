@@ -12,7 +12,8 @@ export default function FindRides() {
     minSeats: "1"
   });
 
-  const API_URL = "http://localhost:4000";
+  // const API_URL = "http://localhost:4000";
+  const API_URL = "http://student-pool.onrender.com";
 
   useEffect(() => {
     fetchAvailableRides();

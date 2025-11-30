@@ -12,7 +12,8 @@ export default function MyRides() {
   const [deletingRideId, setDeletingRideId] = useState(null);
 
   // Replace this with your actual backend URL
-  const API_URL = "http://localhost:4000"; // or your Vercel backend URL
+  // const API_URL = "http://localhost:4000"; // or your Vercel backend URL
+  const API_URL = "http://student-pool.onrender.com"; // or your Vercel backend URL
 
   useEffect(() => {
     fetchRides();
