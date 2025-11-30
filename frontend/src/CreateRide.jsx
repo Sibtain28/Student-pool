@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./App.css";
 
 // const API_URL = "http://localhost:4000/api/rides/create";
-const API_URL = "http://student-pool.onrender.com/api/rides/create";
+const API_URL = "https://student-pool.onrender.com/api/rides/create";
 
 export default function CreateRide() {
   const navigate = useNavigate();

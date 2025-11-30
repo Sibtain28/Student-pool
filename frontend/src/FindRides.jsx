@@ -13,7 +13,7 @@ export default function FindRides() {
   });
 
   // const API_URL = "http://localhost:4000";
-  const API_URL = "http://student-pool.onrender.com";
+  const API_URL = "https://student-pool.onrender.com";
 
   useEffect(() => {
     fetchAvailableRides();

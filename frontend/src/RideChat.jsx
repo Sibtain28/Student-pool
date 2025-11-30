@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 
 // const API_URL = "http://localhost:4000";
-const API_URL = "http://student-pool.onrender.com";
+const API_URL = "https://student-pool.onrender.com";
 
 export default function RideChat({ rideId, currentUserId, currentUserName }) {
   const [messages, setMessages] = useState([]);
