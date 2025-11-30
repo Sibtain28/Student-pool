@@ -13,7 +13,7 @@ export default function MyRides() {
 
   // Replace this with your actual backend URL
   // const API_URL = "http://localhost:4000"; // or your Vercel backend URL
-  const API_URL = "http://student-pool.onrender.com"; // or your Vercel backend URL
+  const API_URL = "https://student-pool.vercel.app"; // or your Vercel backend URL
 
   useEffect(() => {
     fetchRides();
