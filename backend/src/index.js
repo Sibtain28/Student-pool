@@ -849,24 +849,163 @@ app.delete('/api/notifications', authenticateToken, async (req, res) => {
 });
 
 // DELETE/END RIDE
-app.delete('/api/rides/:rideId', authenticateToken, async (req, res) => {
+// REMOVE PARTICIPANT FROM RIDE
+app.delete('/api/rides/:rideId/participants/:participantId', authenticateToken, async (req, res) => {
   try {
     const rideIdInt = parseInt(req.params.rideId);
-    const ride = await prisma.ride.findUnique({ where: { id: rideIdInt } });
-    
+    const participantId = parseInt(req.params.participantId);
+    const userId = req.user.id;
+
+    console.log('=== Remove Participant ===');
+    console.log('Ride ID:', rideIdInt);
+    console.log('Participant ID:', participantId);
+    console.log('Requester ID:', userId);
+
+    // Get the ride
+    const ride = await prisma.ride.findUnique({
+      where: { id: rideIdInt },
+      include: {
+        participants: true
+      }
+    });
+
     if (!ride) {
       return res.status(404).json({ message: 'Ride not found' });
     }
-    
-    if (ride.creatorId !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized' });
+
+    // Only the creator can remove participants
+    if (ride.creatorId !== userId) {
+      return res.status(403).json({ message: 'Only the ride creator can remove participants' });
     }
-    
-    await prisma.ride.delete({ where: { id: rideIdInt } });
-    res.json({ message: 'Ride deleted' });
+
+    // Don't allow removing the creator
+    if (participantId === ride.creatorId) {
+      return res.status(400).json({ message: 'Cannot remove the ride creator' });
+    }
+
+    // Find the participant record
+    const participant = await prisma.rideParticipant.findFirst({
+      where: {
+        rideId: rideIdInt,
+        userId: participantId
+      }
+    });
+
+    if (!participant) {
+      return res.status(404).json({ message: 'Participant not found in this ride' });
+    }
+
+    // Remove the participant
+    await prisma.rideParticipant.delete({
+      where: {
+        id: participant.id
+      }
+    });
+
+    // Increase available seats
+    await prisma.ride.update({
+      where: { id: rideIdInt },
+      data: {
+        seatsAvailable: ride.seatsAvailable + 1
+      }
+    });
+
+    // Get participant user info
+    const participantUser = await prisma.user.findUnique({
+      where: { id: participantId }
+    });
+
+    // Notify the removed participant
+    await prisma.notification.create({
+      data: {
+        userId: participantId,
+        rideId: rideIdInt,
+        type: 'participant_removed',
+        message: `You have been removed from the ride to ${ride.destination}`,
+        isRead: false
+      }
+    });
+
+    console.log('Participant removed successfully');
+    res.json({ 
+      success: true, 
+      message: 'Participant removed successfully'
+    });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error removing participant:', error);
+    res.status(500).json({ 
+      message: 'Failed to remove participant',
+      error: error.message 
+    });
+  }
+});
+
+// DELETE RIDE
+app.delete('/api/rides/:rideId', authenticateToken, async (req, res) => {
+  try {
+    const rideIdInt = parseInt(req.params.rideId);
+    const userId = req.user.id;
+
+    console.log('=== Delete Ride ===');
+    console.log('Ride ID:', rideIdInt);
+    console.log('User ID:', userId);
+
+    // Get the ride
+    const ride = await prisma.ride.findUnique({
+      where: { id: rideIdInt },
+      include: {
+        participants: {
+          include: {
+            user: { select: { id: true, name: true } }
+          }
+        }
+      }
+    });
+
+    if (!ride) {
+      return res.status(404).json({ message: 'Ride not found' });
+    }
+
+    // Only the creator can delete the ride
+    if (ride.creatorId !== userId) {
+      return res.status(403).json({ message: 'Only the ride creator can delete this ride' });
+    }
+
+    // Notify all participants that the ride has been cancelled
+    if (ride.participants.length > 0) {
+      const participantNotifications = ride.participants
+        .filter(p => p.userId !== userId) // Don't notify the creator
+        .map(p => ({
+          userId: p.userId,
+          rideId: rideIdInt,
+          type: 'ride_cancelled',
+          message: `The ride to ${ride.destination} has been cancelled by the creator`,
+          isRead: false
+        }));
+
+      if (participantNotifications.length > 0) {
+        await prisma.notification.createMany({
+          data: participantNotifications
+        });
+      }
+    }
+
+    // Delete the ride (this will cascade delete participants, join requests, and notifications)
+    await prisma.ride.delete({
+      where: { id: rideIdInt }
+    });
+
+    console.log('Ride deleted successfully');
+    res.json({ 
+      success: true, 
+      message: 'Ride deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Error deleting ride:', error);
+    res.status(500).json({ 
+      message: 'Failed to delete ride',
+      error: error.message 
+    });
   }
 });
 
