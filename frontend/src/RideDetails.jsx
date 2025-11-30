@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./App.css";
+import RideChat from "./RideChat";
+
 
 export default function RideDetails() {
   const navigate = useNavigate();
@@ -15,7 +17,8 @@ export default function RideDetails() {
   
 
 
-  const API_URL = "http://localhost:4000";
+  // const API_URL = "http://localhost:4000";
+  const API_URL = "http://student-pool.onrender.com";
 
   useEffect(() => {
     // Get user ID from token instead of API call
@@ -480,6 +483,13 @@ if (!isCreator) {
                   Verified User
                 </div>
               </div>
+              {isParticipant && currentUserId && (
+              <RideChat 
+                rideId={rideId}
+                currentUserId={currentUserId}
+                currentUserName={ride.participants.find(p => p.id === currentUserId)?.name || "User"}
+              />
+            )}
             </div>
           </div>
         </div>
@@ -614,26 +624,12 @@ if (!isCreator) {
               </div>
             </div>
 
-            <div className="ride-chat-card">
-              <div className="chat-header">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <h2>Ride Chat</h2>
-              </div>
-              <div className="chat-empty">
-                <p>No messages yet. Start the conversation!</p>
-              </div>
-              <div className="chat-input-container">
-                <input 
-                  type="text" 
-                  placeholder="Type a message..." 
-                  className="chat-input"
-                />
-                <button className="chat-send-btn">Send</button>
-              </div>
-            </div>
-          </div>
+            <RideChat 
+  rideId={rideId}
+  currentUserId={currentUserId}
+  currentUserName={ride.creator.name}
+/>
+</div>
 
           <div className="ride-details-sidebar">
             <div className="creator-card">

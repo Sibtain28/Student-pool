@@ -1,126 +1,3 @@
-// generator client {
-//   provider = "prisma-client-js"
-// }
-
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DATABASE_URL")
-// }
-
-// model User {
-//   id        Int       @id @default(autoincrement())
-//   email     String    @unique
-//   password  String
-//   name      String?
-//   createdAt DateTime  @default(now())
-
-//   profile          Profile?
-//   ridesCreated     Ride[]               @relation("RideCreator")
-//   rideRequests     RideJoinRequest[]
-//   rideParticipants RideParticipant[]
-//   rideReviews      RideReview[]
-//   messagesSent     Message[]            @relation("SenderMessages")
-//   messagesReceived Message[]            @relation("ReceiverMessages")
-//   notifications    Notification[]
-
-//   @@map("User")
-// }
-
-// model Profile {
-//   id        Int     @id @default(autoincrement())
-//   userId    Int     @unique
-//   bio       String?
-//   avatarUrl String?
-
-//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@map("Profile")
-// }
-
-// // THIS MATCHES YOUR ACTUAL DATABASE STRUCTURE
-// model Ride {
-//   id          Int       @id @default(autoincrement())
-//   creatorId   Int
-//   source      String
-//   destination String
-//   dateTime    DateTime
-//   seats       Int
-//   status      String    @default("active")  // ⬅️ Make sure this line exists
-//   createdAt   DateTime  @default(now())
-
-//   creator      User              @relation("RideCreator", fields: [creatorId], references: [id])
-//   participants RideParticipant[]
-//   joinRequests RideJoinRequest[]
-//   reviews      RideReview[]
-
-//   @@map("Ride")
-// }
-
-// model RideJoinRequest {
-//   id          Int      @id @default(autoincrement())
-//   rideId      Int
-//   requesterId Int
-//   status      String   @default("pending")
-//   createdAt   DateTime @default(now())
-
-//   ride      Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
-//   requester User @relation(fields: [requesterId], references: [id])
-
-//   @@map("RideJoinRequest")
-// }
-
-// model RideParticipant {
-//   id       Int      @id @default(autoincrement())
-//   rideId   Int
-//   userId   Int
-//   joinedAt DateTime @default(now())
-
-//   ride Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
-//   user User @relation(fields: [userId], references: [id])
-
-//   @@unique([rideId, userId])
-//   @@map("RideParticipant")
-// }
-
-// model RideReview {
-//   id        Int      @id @default(autoincrement())
-//   rideId    Int
-//   userId    Int
-//   rating    Int
-//   comment   String?
-//   createdAt DateTime @default(now())
-
-//   ride Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
-//   user User @relation(fields: [userId], references: [id])
-
-//   @@map("RideReview")
-// }
-
-// model Message {
-//   id         Int      @id @default(autoincrement())
-//   senderId   Int
-//   receiverId Int
-//   content    String
-//   createdAt  DateTime @default(now())
-
-//   sender   User @relation("SenderMessages", fields: [senderId], references: [id])
-//   receiver User @relation("ReceiverMessages", fields: [receiverId], references: [id])
-
-//   @@map("Message")
-// }
-
-// model Notification {
-//   id        Int      @id @default(autoincrement())
-//   userId    Int
-//   message   String
-//   isRead    Boolean  @default(false)
-//   createdAt DateTime @default(now())
-
-//   user User @relation(fields: [userId], references: [id])
-
-//   @@map("Notification")
-// }
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -149,6 +26,7 @@ model User {
   messagesReceived           Message[]            @relation("ReceiverMessages")
   notifications              Notification[]       @relation("UserNotifications")
   notificationsAsRequester   Notification[]       @relation("RequesterNotifications")
+  rideMessages RideMessage[]
 
   @@map("User")
 }
@@ -182,6 +60,8 @@ model Ride {
   joinRequests  RideJoinRequest[]
   reviews       RideReview[]
   notifications Notification[]
+  rideMessages RideMessage[]
+
 
   @@map("Ride")
 }
@@ -279,4 +159,19 @@ enum NotificationType {
   ride_cancelled
   participant_joined    // ADDED - for when someone joins the ride
   participant_removed   // ADDED - for when someone is removed from the ride
+}
+
+model RideMessage {
+  id        Int      @id @default(autoincrement())
+  rideId    Int
+  userId    Int
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  ride Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([rideId])
+  @@index([userId])
+  @@map("RideMessage")
 }

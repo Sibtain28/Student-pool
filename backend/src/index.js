@@ -5,8 +5,15 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
 
+const http = require("http");
+const { Server } = require("socket.io");
+const setupSocketIO = require("./socket");
+
+
+
 const prisma = new PrismaClient();
 const app = express();
+const server = http.createServer(app);
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -32,6 +39,18 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// Socket.IO setup
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+// Setup Socket.IO handlers
+setupSocketIO(io);
 
 app.use(express.json());
 
@@ -1036,4 +1055,4 @@ app.patch('/api/rides/:rideId/end', authenticateToken, async (req, res) => {
 
 // Start Server
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Backend running on PORT ${PORT}`));
+server.listen(PORT, () => console.log(`Backend running on PORT ${PORT}`));
