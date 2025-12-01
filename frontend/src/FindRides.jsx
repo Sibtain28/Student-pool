@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./App.css";
 
+
 export default function FindRides() {
   const navigate = useNavigate();
   const [rides, setRides] = useState([]);
@@ -11,6 +12,7 @@ export default function FindRides() {
     date: "",
     minSeats: "1"
   });
+  const [notificationCount, setNotificationCount] = useState(0);
 
   // const API_URL = "http://localhost:4000";
   const API_URL = "https://student-pool.onrender.com";
@@ -59,6 +61,23 @@ export default function FindRides() {
       setLoading(false);
     }
   };
+  useEffect(() => {
+  // Initial load of notification count
+  const count = localStorage.getItem('unreadNotificationCount');
+  setNotificationCount(count ? parseInt(count) : 0);
+  
+  // Listen for updates from Notifications page
+  const handleUpdate = () => {
+    const updatedCount = localStorage.getItem('unreadNotificationCount');
+    setNotificationCount(updatedCount ? parseInt(updatedCount) : 0);
+  };
+  
+  window.addEventListener('notificationCountUpdated', handleUpdate);
+  
+  return () => {
+    window.removeEventListener('notificationCountUpdated', handleUpdate);
+  };
+}, []);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -167,12 +186,21 @@ export default function FindRides() {
           <circle cx="12" cy="7" r="4" />
         </svg>
         <span>{ride.creator.name}</span>
-        <span className="my-ride-verified-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Verified User
-        </span>
+        {ride.creator?.verified ? (
+  <span className="my-ride-verified-badge">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    Verified User
+  </span>
+) : (
+  <span className="my-ride-unverified-badge">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+    Unverified User
+  </span>
+)}
       </div>
 
       <div className="my-ride-actions">
@@ -207,12 +235,15 @@ export default function FindRides() {
             My Rides
           </button>
           <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
-              Notifications
-            </button>
+          Notifications
+          {notificationCount > 0 && (
+          <span className="notification-badge">{notificationCount}</span>
+          )}
+          </button>
           <button 
-  className="nav-item"
-  onClick={() => navigate("/profile")}
->
+          className="nav-item"
+          onClick={() => navigate("/profile")}
+          >
   <span className="nav-icon"></span>
   Profile
 </button>

@@ -2,6 +2,41 @@
 /* GLOBAL RESET + BASE STYLES                       */
 /* ------------------------------------------------ */
 
+/* Ensure consistent page height */
+
+
+/* Prevent navbar bounce/shift */
+html {
+  /* Modern solution - reserves space for scrollbar */
+  scrollbar-gutter: stable;
+  
+  /* Fallback for older browsers */
+  overflow-y: scroll;
+}
+
+/* Ensure consistent layout */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Stabilize header */
+.dashboard-header {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure minimum height */
+.profile-container,
+.ride-details-container,
+.my-rides-container,
+.find-rides-container,
+.notifications-container {
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
 button,
 button:focus,
 button:active {
@@ -1664,7 +1699,8 @@ button:not(.feature-box):active {
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
   font-size: 0.875rem;
-  color: #0f172a;
+  color: black;
+  background-color: white;
   transition: all 0.2s ease;
 }
 
@@ -2375,14 +2411,16 @@ button:not(.feature-box):active {
 
 /* Edit Button */
 .edit-btn {
+  color: black;
   padding: 6px 12px;
   border-radius: 8px;
   border: 1px solid #ddd;
-  background: white;
+  background: rgb(242, 242, 242);
   cursor: pointer;
 }
 
 .edit-btn:hover {
+  color: rgb(0, 128, 255);
   background: #f1f1f1;
 }
 
@@ -2956,6 +2994,56 @@ button:not(.feature-box):active {
 .chat-message-content {
   word-wrap: break-word;
   line-height: 1.5;
+}
+/* Unverified badge styling */
+.my-ride-unverified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.participant-verified .unverified-text {
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.participant-verified .verified-text {
+  color: #10b981;
+  font-size: 13px;
+  font-weight: 500;
+}
+/* Verified and Unverified badges for ride details */
+.verified-badge-large {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+.unverified-badge-large {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-top: 12px;
 }
 
 /* ------------------------------------------------ */

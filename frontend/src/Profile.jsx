@@ -16,6 +16,7 @@ export default function Profile() {
 
   const [user, setUser] = useState(null);
   const [editData, setEditData] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -87,6 +88,24 @@ export default function Profile() {
     }
 
     fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    // Initial load of notification count
+    const count = localStorage.getItem('unreadNotificationCount');
+    setNotificationCount(count ? parseInt(count) : 0);
+    
+    // Listen for updates from Notifications page
+    const handleUpdate = () => {
+      const updatedCount = localStorage.getItem('unreadNotificationCount');
+      setNotificationCount(updatedCount ? parseInt(updatedCount) : 0);
+    };
+    
+    window.addEventListener('notificationCountUpdated', handleUpdate);
+    
+    return () => {
+      window.removeEventListener('notificationCountUpdated', handleUpdate);
+    };
   }, []);
 
   const handleSave = async () => {
@@ -364,6 +383,9 @@ export default function Profile() {
           </button>
           <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
             Notifications
+            {notificationCount > 0 && (
+              <span className="notification-badge">{notificationCount}</span>
+            )}
           </button>
           <button className="nav-item active" onClick={() => navigate("/profile")}>
             <span className="nav-icon"></span>
@@ -412,9 +434,9 @@ export default function Profile() {
           <div className="profile-card-header">
             <h2>Profile Information</h2>
 
-            {!editing && (
+            {!editing && !addingCollege && !addingPhone && (
               <button className="edit-btn" onClick={() => setEditing(true)}>
-                Edit
+                Edit Profile
               </button>
             )}
           </div>
@@ -430,6 +452,7 @@ export default function Profile() {
                   setEditData({ ...editData, fullName: e.target.value })
                 }
                 placeholder="Enter your full name"
+                style={{ color: '#000' }}
               />
             ) : (
               <p>{user.fullName || "Not set"}</p>
@@ -447,6 +470,7 @@ export default function Profile() {
                   setEditData({ ...editData, college: e.target.value })
                 }
                 placeholder="Enter your college name"
+                style={{ color: '#000' }}
               />
             ) : user.college ? (
               <p>{user.college}</p>
@@ -480,6 +504,7 @@ export default function Profile() {
                   setEditData({ ...editData, phone: e.target.value })
                 }
                 placeholder="Enter your phone number"
+                style={{ color: '#000' }}
               />
             ) : user.phone ? (
               <p>{user.phone}</p>
@@ -513,6 +538,7 @@ export default function Profile() {
                   setEditData({ ...editData, email: e.target.value })
                 }
                 placeholder="Enter your email"
+                style={{ color: '#000' }}
               />
             ) : (
               <p>{user.email}</p>

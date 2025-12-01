@@ -10,6 +10,8 @@ export default function MyRides() {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [deletingRideId, setDeletingRideId] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
+
 
   // Replace this with your actual backend URL
   // const API_URL = "http://localhost:4000"; // or your Vercel backend URL
@@ -29,6 +31,23 @@ export default function MyRides() {
       return () => clearTimeout(timer);
     }
   }, [successMessage, error]);
+  useEffect(() => {
+    // Initial load of notification count
+    const count = localStorage.getItem('unreadNotificationCount');
+    setNotificationCount(count ? parseInt(count) : 0);
+    
+    // Listen for updates from Notifications page
+    const handleUpdate = () => {
+      const updatedCount = localStorage.getItem('unreadNotificationCount');
+      setNotificationCount(updatedCount ? parseInt(updatedCount) : 0);
+    };
+    
+    window.addEventListener('notificationCountUpdated', handleUpdate);
+    
+    return () => {
+      window.removeEventListener('notificationCountUpdated', handleUpdate);
+    };
+  }, []);
 
   const fetchRides = async () => {
     try {
@@ -243,12 +262,18 @@ export default function MyRides() {
             <circle cx="12" cy="7" r="4" />
           </svg>
           <span>You</span>
-          <span className="my-ride-verified-badge">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Verified User
-          </span>
+          {ride.creator?.verified ? (
+  <span className="my-ride-verified-badge">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    Verified User
+  </span>
+) : (
+  <span className="my-ride-unverified-badge">
+    Unverified User
+  </span>
+)}
         </div>
       )}
 
@@ -321,9 +346,12 @@ export default function MyRides() {
           <button className="nav-item nav-item-active">
             My Rides
           </button>
-          <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
-              Notifications
-            </button>
+         <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
+          Notifications
+          {notificationCount > 0 && (
+          <span className="notification-badge">{notificationCount}</span>
+          )}
+          </button>
           <button 
   className="nav-item"
   onClick={() => navigate("/profile")}

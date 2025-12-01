@@ -105,14 +105,26 @@ app.post("/api/auth/signup", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const isRishihoodEmail = email.endsWith('@nst.rishihood.edu.in');
 
+    // Create user without verified field for now
     await prisma.user.create({
-      data: { name, email, password: hashedPassword },
+      data: { 
+        name, 
+        email, 
+        password: hashedPassword
+        // verified: isRishihoodEmail  // ← COMMENT THIS OUT
+      },
     });
 
-    return res.json({ message: "Signup successful. Please login." });
+    const message = isRishihoodEmail 
+      ? "Signup successful! Your account is verified. Please login."
+      : "Signup successful. Please login.";
+
+    return res.json({ message });
   } catch (err) {
-    console.error(err);
+    console.error("Signup error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 });
@@ -150,6 +162,7 @@ app.get("/api/users/me", authenticateToken, async (req, res) => {
         email: true,
         phone: true,
         college: true,
+        // verified: true,  // ← COMMENT THIS OUT FOR NOW
         createdAt: true,
         profile: {
           select: {
@@ -164,6 +177,9 @@ app.get("/api/users/me", authenticateToken, async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    // ✅ TEMPORARY: Check email to determine verification status
+    const isVerified = user.email.endsWith('@nst.rishihood.edu.in');
+
     return res.json({
       success: true,
       user: {
@@ -173,7 +189,7 @@ app.get("/api/users/me", authenticateToken, async (req, res) => {
         email: user.email,
         phone: user.phone || "",
         college: user.college || "",
-        verified: false,
+        verified: isVerified,  // ← Computed from email for now
         bio: user.profile?.bio || "",
         avatarUrl: user.profile?.avatarUrl || null
       }

@@ -8,25 +8,24 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  password  String
-  name      String?
-  phone     String?   
-  college   String?   
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
-
-  profile                    Profile?
-  ridesCreated               Ride[]               @relation("RideCreator")
-  rideRequests               RideJoinRequest[]
-  rideParticipants           RideParticipant[]
-  rideReviews                RideReview[]
-  messagesSent               Message[]            @relation("SenderMessages")
-  messagesReceived           Message[]            @relation("ReceiverMessages")
-  notifications              Notification[]       @relation("UserNotifications")
-  notificationsAsRequester   Notification[]       @relation("RequesterNotifications")
-  rideMessages RideMessage[]
+  id                       Int               @id @default(autoincrement())
+  email                    String            @unique
+  password                 String
+  name                     String?
+  createdAt                DateTime          @default(now())
+  college                  String?
+  phone                    String?
+  updatedAt                DateTime          @default(now()) @updatedAt
+  messagesReceived         Message[]         @relation("ReceiverMessages")
+  messagesSent             Message[]         @relation("SenderMessages")
+  notificationsAsRequester Notification[]    @relation("RequesterNotifications")
+  notifications            Notification[]    @relation("UserNotifications")
+  profile                  Profile?
+  ridesCreated             Ride[]            @relation("RideCreator")
+  rideRequests             RideJoinRequest[]
+  rideMessages             RideMessage[]
+  rideParticipants         RideParticipant[]
+  rideReviews              RideReview[]
 
   @@map("User")
 }
@@ -36,46 +35,42 @@ model Profile {
   userId    Int     @unique
   bio       String?
   avatarUrl String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("Profile")
 }
 
 model Ride {
-  id              Int       @id @default(autoincrement())
-  creatorId       Int
-  source          String
-  destination     String
-  dateTime        DateTime
-  seats           Int
-  seatsAvailable  Int
-  costPerPerson   Decimal   @db.Decimal(10, 2)
-  totalCost       Decimal   @db.Decimal(10, 2)
-  status          String    @default("active")
-  createdAt       DateTime  @default(now())
-
-  creator       User                @relation("RideCreator", fields: [creatorId], references: [id])
-  participants  RideParticipant[]
-  joinRequests  RideJoinRequest[]
-  reviews       RideReview[]
-  notifications Notification[]
-  rideMessages RideMessage[]
-
+  id             Int               @id @default(autoincrement())
+  creatorId      Int
+  source         String
+  destination    String
+  dateTime       DateTime
+  seats          Int
+  createdAt      DateTime          @default(now())
+  status         String            @default("active")
+  costPerPerson  Decimal           @db.Decimal(10, 2)
+  seatsAvailable Int
+  totalCost      Decimal           @db.Decimal(10, 2)
+  notifications  Notification[]
+  creator        User              @relation("RideCreator", fields: [creatorId], references: [id])
+  joinRequests   RideJoinRequest[]
+  rideMessages   RideMessage[]
+  participants   RideParticipant[]
+  reviews        RideReview[]
 
   @@map("Ride")
 }
 
 model RideJoinRequest {
-  id          Int      @id @default(autoincrement())
+  id          Int                   @id @default(autoincrement())
   rideId      Int
   requesterId Int
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
   status      RideJoinRequestStatus @default(pending)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  ride      Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  requester User @relation(fields: [requesterId], references: [id])
+  requester   User                  @relation(fields: [requesterId], references: [id])
+  ride        Ride                  @relation(fields: [rideId], references: [id], onDelete: Cascade)
 
   @@unique([rideId, requesterId])
   @@index([rideId])
@@ -88,9 +83,8 @@ model RideParticipant {
   rideId   Int
   userId   Int
   joinedAt DateTime @default(now())
-
-  ride Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id])
+  ride     Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
 
   @@unique([rideId, userId])
   @@map("RideParticipant")
@@ -103,9 +97,8 @@ model RideReview {
   rating    Int
   comment   String?
   createdAt DateTime @default(now())
-
-  ride Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id])
+  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
 
   @@map("RideReview")
 }
@@ -116,9 +109,8 @@ model Message {
   receiverId Int
   content    String
   createdAt  DateTime @default(now())
-
-  sender   User @relation("SenderMessages", fields: [senderId], references: [id])
-  receiver User @relation("ReceiverMessages", fields: [receiverId], references: [id])
+  receiver   User     @relation("ReceiverMessages", fields: [receiverId], references: [id])
+  sender     User     @relation("SenderMessages", fields: [senderId], references: [id])
 
   @@map("Message")
 }
@@ -126,16 +118,15 @@ model Message {
 model Notification {
   id          Int              @id @default(autoincrement())
   userId      Int
-  rideId      Int
-  requesterId Int?
-  type        NotificationType
-  message     String           @db.Text
+  message     String
   isRead      Boolean          @default(false)
   createdAt   DateTime         @default(now())
-
-  user      User  @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
-  ride      Ride  @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  requester User? @relation("RequesterNotifications", fields: [requesterId], references: [id], onDelete: SetNull)
+  requesterId Int?
+  rideId      Int
+  type        NotificationType
+  requester   User?            @relation("RequesterNotifications", fields: [requesterId], references: [id])
+  ride        Ride             @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user        User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([rideId])
@@ -143,7 +134,20 @@ model Notification {
   @@map("Notification")
 }
 
-// Enums
+model RideMessage {
+  id        Int      @id @default(autoincrement())
+  rideId    Int
+  userId    Int
+  message   String
+  createdAt DateTime @default(now())
+  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([rideId])
+  @@index([userId])
+  @@map("RideMessage")
+}
+
 enum RideJoinRequestStatus {
   pending
   accepted
@@ -157,21 +161,6 @@ enum NotificationType {
   request_declined
   ride_updated
   ride_cancelled
-  participant_joined    // ADDED - for when someone joins the ride
-  participant_removed   // ADDED - for when someone is removed from the ride
-}
-
-model RideMessage {
-  id        Int      @id @default(autoincrement())
-  rideId    Int
-  userId    Int
-  message   String   @db.Text
-  createdAt DateTime @default(now())
-
-  ride Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([rideId])
-  @@index([userId])
-  @@map("RideMessage")
+  participant_joined
+  participant_removed
 }

@@ -23,6 +23,13 @@ export default function Notifications() {
   // Calculate unread count for badge
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
+  // Save unread count to localStorage whenever it changes
+useEffect(() => {
+  localStorage.setItem('unreadNotificationCount', unreadCount.toString());
+  // Dispatch a custom event to notify other components
+  window.dispatchEvent(new Event('notificationCountUpdated'));
+}, [unreadCount]);
+
   const fetchNotifications = async () => {
     try {
       setLoading(true);
@@ -398,7 +405,6 @@ export default function Notifications() {
             className="nav-item"
             onClick={() => navigate("/profile")}
           >
-            <span className="nav-icon">👤</span>
             Profile
           </button>
           <button className="nav-item logout-btn" onClick={handleLogout}>
@@ -467,3 +473,5 @@ export default function Notifications() {
     </div>
   );
 }
+
+

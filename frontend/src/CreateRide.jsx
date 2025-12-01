@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
 import { useNavigate } from "react-router-dom";
 import "./App.css";
 
@@ -19,6 +20,19 @@ export default function CreateRide() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notificationCount, setNotificationCount] = useState(0);
+  useEffect(() => {
+  const count = localStorage.getItem('unreadNotificationCount');
+  setNotificationCount(count ? parseInt(count) : 0);
+  
+  const handleUpdate = () => {
+    const updatedCount = localStorage.getItem('unreadNotificationCount');
+    setNotificationCount(updatedCount ? parseInt(updatedCount) : 0);
+  };
+  
+  window.addEventListener('notificationCountUpdated', handleUpdate);
+  return () => window.removeEventListener('notificationCountUpdated', handleUpdate);
+}, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -140,8 +154,11 @@ export default function CreateRide() {
             My Rides
           </button>
          <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
-              Notifications
-            </button>
+  Notifications
+  {notificationCount > 0 && (
+    <span className="notification-badge">{notificationCount}</span>
+  )}
+</button>
         <button 
   className="nav-item"
   onClick={() => navigate("/profile")}

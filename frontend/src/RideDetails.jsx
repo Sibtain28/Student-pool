@@ -4,6 +4,7 @@ import "./App.css";
 import RideChat from "./RideChat";
 
 
+
 export default function RideDetails() {
   const navigate = useNavigate();
   const { rideId } = useParams();
@@ -14,6 +15,7 @@ export default function RideDetails() {
   const [joiningRide, setJoiningRide] = useState(false);
   const [joinRequestStatus, setJoinRequestStatus] = useState(null); // 'pending', 'accepted', 'declined', null
   const [removingParticipant, setRemovingParticipant] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
   
 
 
@@ -33,6 +35,24 @@ export default function RideDetails() {
       checkJoinRequestStatus();
     }
   }, [rideId]);
+  useEffect(() => {
+  // Initial load of notification count
+  const count = localStorage.getItem('unreadNotificationCount');
+  setNotificationCount(count ? parseInt(count) : 0);
+  
+  // Listen for updates from Notifications page
+  const handleUpdate = () => {
+    const updatedCount = localStorage.getItem('unreadNotificationCount');
+    setNotificationCount(updatedCount ? parseInt(updatedCount) : 0);
+  };
+  
+  window.addEventListener('notificationCountUpdated', handleUpdate);
+  
+  return () => {
+    window.removeEventListener('notificationCountUpdated', handleUpdate);
+  };
+}, []);
+
 
   const getCurrentUserIdFromToken = () => {
     try {
@@ -240,8 +260,16 @@ export default function RideDetails() {
             </button>
             <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
               Notifications
+            {notificationCount > 0 && (
+            <span className="notification-badge">{notificationCount}</span>
+            )}
             </button>
-            <button className="nav-item">Profile</button>
+             <button 
+  className="nav-item"
+  onClick={() => navigate("/profile")}
+>
+  Profile
+</button>
             <button className="nav-item logout-btn" onClick={handleLogout}>
               Logout
             </button>
@@ -282,7 +310,6 @@ export default function RideDetails() {
   className="nav-item"
   onClick={() => navigate("/profile")}
 >
-  <span className="nav-icon"></span>
   Profile
 </button>
             <button className="nav-item logout-btn" onClick={handleLogout}>
@@ -476,12 +503,21 @@ if (!isCreator) {
                     <p className="creator-school">Newton School</p>
                   </div>
                 </div>
-                <div className="verified-badge-large">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Verified User
-                </div>
+                {ride.creator?.verified ? (
+  <div className="verified-badge-large">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    Verified User
+  </div>
+) : (
+  <div className="unverified-badge-large">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+    Unverified User
+  </div>
+)}
               </div>
               {isParticipant && currentUserId && (
               <RideChat 
@@ -522,7 +558,12 @@ if (!isCreator) {
           <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
             Notifications
           </button>
-          <button className="nav-item">Profile</button>
+           <button 
+  className="nav-item"
+  onClick={() => navigate("/profile")}
+>
+  Profile
+</button>
           <button className="nav-item logout-btn" onClick={handleLogout}>
             Logout
           </button>
@@ -646,12 +687,21 @@ if (!isCreator) {
                   <p className="creator-school">Newton School</p>
                 </div>
               </div>
-              <div className="verified-badge-large">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Verified User
-              </div>
+              {ride.creator?.verified ? (
+  <div className="verified-badge-large">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    Verified User
+  </div>
+) : (
+  <div className="unverified-badge-large">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+    Unverified User
+  </div>
+)}
             </div>
 
             {/* Participants List */}
@@ -677,12 +727,12 @@ if (!isCreator) {
                           </p>
                           <p className="participant-school">Newton School</p>
                           <div className="participant-verified">
-                            {participant.is_verified ? (
-                              <span className="verified-text">✓ Verified User</span>
-                            ) : (
-                              <span className="unverified-text">○ Unverified User</span>
-                            )}
-                          </div>
+  {participant.is_verified ? (
+    <span className="verified-text">✓ Verified User</span>
+  ) : (
+    <span className="unverified-text">○ Unverified User</span>
+  )}
+</div>
                         </div>
                       </div>
                       {String(participant.id) !== String(ride.creator.id) && (
@@ -717,12 +767,21 @@ if (!isCreator) {
                   <p className="creator-school">Newton School</p>
                 </div>
               </div>
-              <div className="verified-badge-large">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Verified User
-              </div>
+              {ride.creator?.verified ? (
+  <div className="verified-badge-large">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+  Verified User
+</div>
+) : (
+  <div className="unverified-badge-large">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+    Unverified User
+  </div>
+)}
             </div>
           </div>
         </div>
