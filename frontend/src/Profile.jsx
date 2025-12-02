@@ -70,7 +70,7 @@ export default function Profile() {
       } catch (error) {
         console.error("Profile fetch error:", error);
         setError(error.message || "Failed to load profile");
-        
+
         const stored = localStorage.getItem("user");
         if (stored) {
           try {
@@ -94,15 +94,15 @@ export default function Profile() {
     // Initial load of notification count
     const count = localStorage.getItem('unreadNotificationCount');
     setNotificationCount(count ? parseInt(count) : 0);
-    
+
     // Listen for updates from Notifications page
     const handleUpdate = () => {
       const updatedCount = localStorage.getItem('unreadNotificationCount');
       setNotificationCount(updatedCount ? parseInt(updatedCount) : 0);
     };
-    
+
     window.addEventListener('notificationCountUpdated', handleUpdate);
-    
+
     return () => {
       window.removeEventListener('notificationCountUpdated', handleUpdate);
     };
@@ -166,7 +166,7 @@ export default function Profile() {
       setUser(updatedUser);
       setEditData(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
-      
+
       setSuccessMessage("Profile updated successfully!");
       setEditing(false);
       setAddingCollege(false);
@@ -206,7 +206,7 @@ export default function Profile() {
       <>
         {/* Header */}
         <header className="dashboard-header">
-          <div className="dashboard-logo">
+          <div className="dashboard-logo" onClick={() => navigate("/dashboard")} style={{ cursor: "pointer" }}>
             <div className="logo-circle">
               <span className="logo-icon">🚗</span>
             </div>
@@ -235,8 +235,14 @@ export default function Profile() {
         </header>
 
         <div className="profile-container">
-          <div style={{ textAlign: "center", padding: "40px" }}>
-            <h1>Loading Profile...</h1>
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "60vh",
+            flexDirection: "column"
+          }}>
+            <div className="loading-spinner"></div>
           </div>
         </div>
       </>
@@ -248,7 +254,7 @@ export default function Profile() {
       <>
         {/* Header */}
         <header className="dashboard-header">
-          <div className="dashboard-logo">
+          <div className="dashboard-logo" onClick={() => navigate("/dashboard")} style={{ cursor: "pointer" }}>
             <div className="logo-circle">
               <span className="logo-icon">🚗</span>
             </div>
@@ -280,9 +286,9 @@ export default function Profile() {
           <div style={{ textAlign: "center", padding: "40px" }}>
             <h1>Error Loading Profile</h1>
             <p style={{ color: "#c00", marginTop: "16px" }}>{error}</p>
-            <button 
+            <button
               onClick={() => window.location.href = "/login"}
-              style={{ 
+              style={{
                 marginTop: "16px",
                 padding: "12px 24px",
                 backgroundColor: "#007bff",
@@ -306,7 +312,7 @@ export default function Profile() {
       <>
         {/* Header */}
         <header className="dashboard-header">
-          <div className="dashboard-logo">
+          <div className="dashboard-logo" onClick={() => navigate("/dashboard")} style={{ cursor: "pointer" }}>
             <div className="logo-circle">
               <span className="logo-icon">🚗</span>
             </div>
@@ -337,9 +343,9 @@ export default function Profile() {
         <div className="profile-container">
           <div style={{ textAlign: "center", padding: "40px" }}>
             <h1>No profile found. Try logging in again.</h1>
-            <button 
+            <button
               onClick={() => window.location.href = "/login"}
-              style={{ 
+              style={{
                 marginTop: "16px",
                 padding: "12px 24px",
                 backgroundColor: "#007bff",
@@ -362,7 +368,7 @@ export default function Profile() {
     <>
       {/* Header */}
       <header className="dashboard-header">
-        <div className="dashboard-logo">
+        <div className="dashboard-logo" onClick={() => navigate("/dashboard")} style={{ cursor: "pointer" }}>
           <div className="logo-circle">
             <span className="logo-icon">🚗</span>
           </div>
@@ -399,179 +405,195 @@ export default function Profile() {
       </header>
 
       <div className="profile-container">
-        <h1 className="profile-title">My Profile</h1>
-        <p className="profile-subtitle">Manage your personal information</p>
+        <div className="profile-header-section">
+          <h1 className="profile-title">My Profile</h1>
+          <p className="profile-subtitle">Manage your personal information</p>
+        </div>
 
         {successMessage && (
-          <div style={{
-            padding: "12px 16px",
-            marginBottom: "20px",
-            backgroundColor: "#d4edda",
-            border: "1px solid #c3e6cb",
-            borderRadius: "8px",
-            color: "#155724",
-            textAlign: "center"
-          }}>
-            ✓ {successMessage}
+          <div className="profile-alert success">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            {successMessage}
           </div>
         )}
 
         {error && (
-          <div style={{
-            padding: "12px 16px",
-            marginBottom: "20px",
-            backgroundColor: "#f8d7da",
-            border: "1px solid #f5c6cb",
-            borderRadius: "8px",
-            color: "#721c24",
-            textAlign: "center"
-          }}>
-            ✕ {error}
+          <div className="profile-alert error">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            {error}
           </div>
         )}
 
-        <div className="profile-card">
-          <div className="profile-card-header">
-            <h2>Profile Information</h2>
-
-            {!editing && !addingCollege && !addingPhone && (
-              <button className="edit-btn" onClick={() => setEditing(true)}>
-                Edit Profile
-              </button>
-            )}
-          </div>
-
-          {/* Full Name */}
-          <div className="profile-item">
-            <label>Full Name</label>
-            {editing ? (
-              <input
-                type="text"
-                value={editData.fullName}
-                onChange={(e) =>
-                  setEditData({ ...editData, fullName: e.target.value })
-                }
-                placeholder="Enter your full name"
-                style={{ color: '#000' }}
-              />
-            ) : (
-              <p>{user.fullName || "Not set"}</p>
-            )}
-          </div>
-
-          {/* College */}
-          <div className="profile-item">
-            <label>College</label>
-            {(editing || addingCollege) ? (
-              <input
-                type="text"
-                value={editData.college}
-                onChange={(e) =>
-                  setEditData({ ...editData, college: e.target.value })
-                }
-                placeholder="Enter your college name"
-                style={{ color: '#000' }}
-              />
-            ) : user.college ? (
-              <p>{user.college}</p>
-            ) : (
-              <button 
-                onClick={handleAddCollege}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "500"
-                }}
-              >
-                + Add College
-              </button>
-            )}
-          </div>
-
-          {/* Phone */}
-          <div className="profile-item">
-            <label>Phone</label>
-            {(editing || addingPhone) ? (
-              <input
-                type="tel"
-                value={editData.phone}
-                onChange={(e) =>
-                  setEditData({ ...editData, phone: e.target.value })
-                }
-                placeholder="Enter your phone number"
-                style={{ color: '#000' }}
-              />
-            ) : user.phone ? (
-              <p>{user.phone}</p>
-            ) : (
-              <button 
-                onClick={handleAddPhone}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "500"
-                }}
-              >
-                + Add Phone
-              </button>
-            )}
-          </div>
-
-          {/* Email */}
-          <div className="profile-item">
-            <label>Email</label>
-            {editing ? (
-              <input
-                type="email"
-                value={editData.email}
-                onChange={(e) =>
-                  setEditData({ ...editData, email: e.target.value })
-                }
-                placeholder="Enter your email"
-                style={{ color: '#000' }}
-              />
-            ) : (
-              <p>{user.email}</p>
-            )}
-          </div>
-
-          {/* Verification */}
-          <div className="profile-item">
-            <label>Verification Status</label>
-            <p className={user.verified ? "verified" : "unverified"}>
-              {user.verified ? "Verified User" : "Unverified User"}
-            </p>
-          </div>
-
-          {/* Buttons only in edit mode */}
-          {(editing || addingCollege || addingPhone) && (
-            <div className="edit-actions">
-              <button 
-                className="save-btn" 
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-              <button 
-                className="cancel-btn" 
-                onClick={handleCancel}
-                disabled={saving}
-              >
-                Cancel
-              </button>
+        <div className="profile-content-grid">
+          {/* Left Column: Identity Card */}
+          <div className="profile-identity-card">
+            <div className="profile-avatar-large">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
             </div>
-          )}
+            <h2 className="profile-name-large">{user.fullName || "User"}</h2>
+            <p className="profile-email-large">{user.email}</p>
+
+            <div className={`profile-verification-badge ${user.verified ? 'verified' : 'unverified'}`}>
+              {user.verified ? (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Verified Student
+                </>
+              ) : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                  </svg>
+                  Unverified
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Details Form */}
+          <div className="profile-details-card">
+            <div className="profile-card-header">
+              <h3>Personal Details</h3>
+              {!editing && !addingCollege && !addingPhone && (
+                <button className="edit-profile-btn" onClick={() => setEditing(true)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Edit
+                </button>
+              )}
+            </div>
+
+            <div className="profile-form">
+              {/* Full Name */}
+              <div className="profile-field-group">
+                <label>Full Name</label>
+                <div className="field-input-wrapper">
+                  <div className="field-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  {editing ? (
+                    <input
+                      type="text"
+                      value={editData.fullName}
+                      onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
+                      placeholder="Enter your full name"
+                      className="profile-input"
+                    />
+                  ) : (
+                    <div className="field-value">{user.fullName || "Not set"}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* College */}
+              <div className="profile-field-group">
+                <label>College / University</label>
+                <div className="field-input-wrapper">
+                  <div className="field-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                      <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                    </svg>
+                  </div>
+                  {(editing || addingCollege) ? (
+                    <input
+                      type="text"
+                      value={editData.college}
+                      onChange={(e) => setEditData({ ...editData, college: e.target.value })}
+                      placeholder="Enter your college name"
+                      className="profile-input"
+                    />
+                  ) : user.college ? (
+                    <div className="field-value">{user.college}</div>
+                  ) : (
+                    <button className="add-field-btn" onClick={handleAddCollege}>
+                      + Add College
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div className="profile-field-group">
+                <label>Phone Number</label>
+                <div className="field-input-wrapper">
+                  <div className="field-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                  </div>
+                  {(editing || addingPhone) ? (
+                    <input
+                      type="tel"
+                      value={editData.phone}
+                      onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                      placeholder="Enter your phone number"
+                      className="profile-input"
+                    />
+                  ) : user.phone ? (
+                    <div className="field-value">{user.phone}</div>
+                  ) : (
+                    <button className="add-field-btn" onClick={handleAddPhone}>
+                      + Add Phone
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="profile-field-group">
+                <label>Email Address</label>
+                <div className="field-input-wrapper">
+                  <div className="field-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                  </div>
+                  {editing ? (
+                    <input
+                      type="email"
+                      value={editData.email}
+                      onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                      placeholder="Enter your email"
+                      className="profile-input"
+                    />
+                  ) : (
+                    <div className="field-value">{user.email}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              {(editing || addingCollege || addingPhone) && (
+                <div className="profile-actions">
+                  <button className="cancel-profile-btn" onClick={handleCancel} disabled={saving}>
+                    Cancel
+                  </button>
+                  <button className="save-profile-btn" onClick={handleSave} disabled={saving}>
+                    {saving ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </>

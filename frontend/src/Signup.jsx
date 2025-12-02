@@ -25,10 +25,10 @@ export default function Signup() {
         password,
       });
 
-      const message = isRishihoodEmail 
+      const message = isRishihoodEmail
         ? "Signup successful! Your account is verified. Please login."
         : "Signup successful! Please login.";
-      
+
       alert(message);
       navigate("/login", { replace: true });
     } catch (err) {
@@ -48,7 +48,7 @@ export default function Signup() {
 
         <form className="auth-card" onSubmit={submit}>
           <h2>Create account</h2>
-          
+
           {error && (
             <div style={{
               padding: "12px",
@@ -63,29 +63,48 @@ export default function Signup() {
             </div>
           )}
 
-          <input
-            placeholder="Full name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            disabled={loading}
-          />
-          <input
-            placeholder="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={loading}
-          />
-          
+          <div className="input-group">
+            <div className="input-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <input
+              className="auth-input"
+              placeholder="Full name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+
+          <div className="input-group">
+            <div className="input-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </div>
+            <input
+              className="auth-input"
+              placeholder="Email address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+
           {/* Show verification badge for Rishihood emails */}
           {isRishihoodEmail && email.length > 0 && (
             <div style={{
               padding: "10px 12px",
               marginTop: "-8px",
-              marginBottom: "12px",
+              marginBottom: "16px",
               backgroundColor: "#d4edda",
               border: "1px solid #c3e6cb",
               borderRadius: "8px",
@@ -100,20 +119,29 @@ export default function Signup() {
             </div>
           )}
 
-          <input
-            placeholder="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={loading}
-            minLength={6}
-          />
-          
-          <button type="submit" disabled={loading}>
+          <div className="input-group">
+            <div className="input-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <input
+              className="auth-input"
+              placeholder="Password (min 6 chars)"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loading}
+              minLength={6}
+            />
+          </div>
+
+          <button type="submit" className="auth-btn" disabled={loading}>
             {loading ? "Creating account..." : "Create account"}
           </button>
-          
+
           <div className="form-footer">
             <span>Already have an account?</span> <a href="/login">Sign in</a>
           </div>

@@ -27,15 +27,15 @@ export default function Login() {
       );
 
       if (res.data && res.data.token) {
-  // Clear any old data first
-  localStorage.clear(); // or specifically remove 'user' and 'token'
-  
-  // Store the new token
-  localStorage.setItem("token", res.data.token);
-  
-  console.log("✅ Login successful, token stored");
-  navigate("/dashboard");
-} else {
+        // Clear any old data first
+        localStorage.clear(); // or specifically remove 'user' and 'token'
+
+        // Store the new token
+        localStorage.setItem("token", res.data.token);
+
+        console.log("✅ Login successful, token stored");
+        navigate("/dashboard");
+      } else {
         setError("Login failed: No token received.");
       }
     } catch (err) {
@@ -57,7 +57,7 @@ export default function Login() {
 
         <form className="auth-card" onSubmit={submit}>
           <h2>Sign in</h2>
-          
+
           {error && (
             <div style={{
               padding: "12px",
@@ -72,21 +72,41 @@ export default function Login() {
             </div>
           )}
 
-          <input
-            placeholder="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
-          />
-          <input
-            placeholder="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-          />
-          <button type="submit" disabled={loading}>
+          <div className="input-group">
+            <div className="input-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </div>
+            <input
+              className="auth-input"
+              placeholder="Email address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="input-group">
+            <div className="input-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <input
+              className="auth-input"
+              placeholder="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+
+          <button type="submit" className="auth-btn" disabled={loading}>
             {loading ? "Signing in..." : "Sign in"}
           </button>
           <div className="form-footer">

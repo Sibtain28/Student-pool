@@ -62,22 +62,22 @@ export default function FindRides() {
     }
   };
   useEffect(() => {
-  // Initial load of notification count
-  const count = localStorage.getItem('unreadNotificationCount');
-  setNotificationCount(count ? parseInt(count) : 0);
-  
-  // Listen for updates from Notifications page
-  const handleUpdate = () => {
-    const updatedCount = localStorage.getItem('unreadNotificationCount');
-    setNotificationCount(updatedCount ? parseInt(updatedCount) : 0);
-  };
-  
-  window.addEventListener('notificationCountUpdated', handleUpdate);
-  
-  return () => {
-    window.removeEventListener('notificationCountUpdated', handleUpdate);
-  };
-}, []);
+    // Initial load of notification count
+    const count = localStorage.getItem('unreadNotificationCount');
+    setNotificationCount(count ? parseInt(count) : 0);
+
+    // Listen for updates from Notifications page
+    const handleUpdate = () => {
+      const updatedCount = localStorage.getItem('unreadNotificationCount');
+      setNotificationCount(updatedCount ? parseInt(updatedCount) : 0);
+    };
+
+    window.addEventListener('notificationCountUpdated', handleUpdate);
+
+    return () => {
+      window.removeEventListener('notificationCountUpdated', handleUpdate);
+    };
+  }, []);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -119,7 +119,7 @@ export default function FindRides() {
   };
 
   const getStatusStyle = (status) => {
-    switch(status) {
+    switch (status) {
       case 'completed':
         return { background: '#d1fae5', color: '#10b981' };
       case 'cancelled':
@@ -133,7 +133,7 @@ export default function FindRides() {
     <div className="my-ride-card">
       <div className="my-ride-card-header">
         <h3 className="my-ride-destination">{ride.destination}</h3>
-        <span 
+        <span
           className="my-ride-status-badge"
           style={getStatusStyle(ride.status || 'active')}
         >
@@ -187,20 +187,20 @@ export default function FindRides() {
         </svg>
         <span>{ride.creator.name}</span>
         {ride.creator?.verified ? (
-  <span className="my-ride-verified-badge">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    Verified User
-  </span>
-) : (
-  <span className="my-ride-unverified-badge">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" />
-    </svg>
-    Unverified User
-  </span>
-)}
+          <span className="my-ride-verified-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Verified User
+          </span>
+        ) : (
+          <span className="my-ride-unverified-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+            Unverified User
+          </span>
+        )}
       </div>
 
       <div className="my-ride-actions">
@@ -235,18 +235,18 @@ export default function FindRides() {
             My Rides
           </button>
           <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
-          Notifications
-          {notificationCount > 0 && (
-          <span className="notification-badge">{notificationCount}</span>
-          )}
+            Notifications
+            {notificationCount > 0 && (
+              <span className="notification-badge">{notificationCount}</span>
+            )}
           </button>
-          <button 
-          className="nav-item"
-          onClick={() => navigate("/profile")}
+          <button
+            className="nav-item"
+            onClick={() => navigate("/profile")}
           >
-  <span className="nav-icon"></span>
-  Profile
-</button>
+            <span className="nav-icon"></span>
+            Profile
+          </button>
           <button className="nav-item logout-btn" onClick={handleLogout}>
             Logout
           </button>
@@ -255,7 +255,13 @@ export default function FindRides() {
 
       <div className="find-rides-content">
         <div className="find-rides-header">
-          <h1 className="find-rides-title">Find Your Ride</h1>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <h1 className="find-rides-title">Find Your Ride</h1>
+          </div>
           <p className="find-rides-subtitle">Browse available rides and join students heading your way</p>
         </div>
 
@@ -302,8 +308,20 @@ export default function FindRides() {
             </div>
 
             <div className="filter-actions">
+              <button className="filter-btn filter-btn-apply" onClick={handleApplyFilters}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                Apply Filters
+              </button>
               <button className="filter-btn filter-btn-reset" onClick={handleResetFilters}>
-                Reset Filters
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 6h18"></path>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                </svg>
+                Reset
               </button>
             </div>
           </div>

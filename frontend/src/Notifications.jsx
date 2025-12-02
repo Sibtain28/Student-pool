@@ -14,21 +14,22 @@ export default function Notifications() {
 
   useEffect(() => {
     fetchNotifications();
-    
+
     // Poll for new notifications every 10 seconds
     const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
   }, []);
+  
 
   // Calculate unread count for badge
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   // Save unread count to localStorage whenever it changes
-useEffect(() => {
-  localStorage.setItem('unreadNotificationCount', unreadCount.toString());
-  // Dispatch a custom event to notify other components
-  window.dispatchEvent(new Event('notificationCountUpdated'));
-}, [unreadCount]);
+  useEffect(() => {
+    localStorage.setItem('unreadNotificationCount', unreadCount.toString());
+    // Dispatch a custom event to notify other components
+    window.dispatchEvent(new Event('notificationCountUpdated'));
+  }, [unreadCount]);
 
   const fetchNotifications = async () => {
     try {
@@ -57,7 +58,7 @@ useEffect(() => {
 
       const data = await response.json();
       console.log("Notifications received:", data);
-      
+
       // Backend already filters out handled join requests, so just use the data directly
       setNotifications(data.notifications || []);
     } catch (error) {
@@ -76,9 +77,9 @@ useEffect(() => {
     try {
       setProcessingNotification(notificationId);
       const token = localStorage.getItem("token");
-      
+
       console.log('Accepting join request:', { notificationId, rideId });
-      
+
       const response = await fetch(`${API_URL}/api/notifications/${notificationId}/accept`, {
         method: 'POST',
         headers: {
@@ -93,7 +94,7 @@ useEffect(() => {
       if (response.ok) {
         // Show success message
         console.log('Join request accepted successfully');
-        
+
         // Refresh notifications to show the updated state
         await fetchNotifications();
       } else {
@@ -116,9 +117,9 @@ useEffect(() => {
     try {
       setProcessingNotification(notificationId);
       const token = localStorage.getItem("token");
-      
+
       console.log('Declining join request:', { notificationId });
-      
+
       const response = await fetch(`${API_URL}/api/notifications/${notificationId}/decline`, {
         method: 'POST',
         headers: {
@@ -154,7 +155,7 @@ useEffect(() => {
           "Content-Type": "application/json"
         },
       });
-      
+
       // Update local state instead of fetching all notifications
       setNotifications(prevNotifications =>
         prevNotifications.map(notif =>
@@ -178,7 +179,7 @@ useEffect(() => {
           "Content-Type": "application/json"
         },
       });
-      
+
       // Update local state to mark all as read
       setNotifications(prevNotifications =>
         prevNotifications.map(notif => ({ ...notif, is_read: true }))
@@ -190,7 +191,7 @@ useEffect(() => {
 
   const handleDeleteAll = async () => {
     if (!window.confirm("Delete all notifications?")) return;
-    
+
     try {
       const token = localStorage.getItem("token");
       await fetch(`${API_URL}/api/notifications`, {
@@ -216,7 +217,7 @@ useEffect(() => {
           "Content-Type": "application/json"
         },
       });
-      
+
       // Remove notification from local state
       setNotifications(prevNotifications =>
         prevNotifications.filter(notif => notif.id !== notificationId)
@@ -233,19 +234,19 @@ useEffect(() => {
 
   const NotificationCard = ({ notification }) => {
     const rideId = notification.ride_id || notification.ride?.id;
-    
+
     const isJoinRequest = notification.type === 'join_request';
     const isNewRide = notification.type === 'new_ride';
     const isRequestAccepted = notification.type === 'request_accepted';
     const isRequestDeclined = notification.type === 'request_declined';
     const isParticipantJoined = notification.type === 'participant_joined';
     const isParticipantRemoved = notification.type === 'participant_removed';
-    
+
     const isProcessing = processingNotification === notification.id;
 
     // Get the appropriate emoji based on notification type
     const getNotificationEmoji = () => {
-      switch(notification.type) {
+      switch (notification.type) {
         case 'join_request':
           return '🤝';
         case 'new_ride':
@@ -270,12 +271,12 @@ useEffect(() => {
       const date = new Date(dateString);
       const now = new Date();
       const diffInSeconds = Math.floor((now - date) / 1000);
-      
+
       if (diffInSeconds < 60) return 'Just now';
       if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
       if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
       if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-      
+
       return date.toLocaleDateString();
     };
 
@@ -292,7 +293,7 @@ useEffect(() => {
             </p>
             <div className="notification-actions-top">
               {!notification.is_read && (
-                <button 
+                <button
                   className="notification-action-icon"
                   onClick={() => handleMarkAsRead(notification.id)}
                   title="Mark as read"
@@ -303,7 +304,7 @@ useEffect(() => {
                   </svg>
                 </button>
               )}
-              <button 
+              <button
                 className="notification-action-icon"
                 onClick={() => handleDeleteOne(notification.id)}
                 title="Delete"
@@ -322,7 +323,7 @@ useEffect(() => {
           {/* Show Accept/Decline buttons for join requests */}
           {isJoinRequest && (
             <div className="notification-buttons">
-              <button 
+              <button
                 className="notification-btn notification-btn-accept"
                 onClick={() => handleAccept(notification.id, rideId)}
                 disabled={isProcessing}
@@ -341,7 +342,7 @@ useEffect(() => {
                   </>
                 )}
               </button>
-              <button 
+              <button
                 className="notification-btn notification-btn-decline"
                 onClick={() => handleDecline(notification.id)}
                 disabled={isProcessing}
@@ -363,7 +364,7 @@ useEffect(() => {
 
           {/* Show View Ride button for applicable notification types */}
           {(isNewRide || isRequestAccepted || isRequestDeclined || isParticipantJoined) && rideId && (
-            <button 
+            <button
               className="notification-view-ride-btn"
               onClick={() => navigate(`/ride-details/${rideId}`)}
             >
@@ -401,7 +402,7 @@ useEffect(() => {
               <span className="notification-badge">{unreadCount}</span>
             )}
           </button>
-          <button 
+          <button
             className="nav-item"
             onClick={() => navigate("/profile")}
           >
@@ -426,8 +427,8 @@ useEffect(() => {
           <div className="notifications-header-actions">
             {notifications.length > 0 && (
               <>
-                <button 
-                  className="header-action-btn" 
+                <button
+                  className="header-action-btn"
                   onClick={handleMarkAllAsRead}
                   disabled={unreadCount === 0}
                 >

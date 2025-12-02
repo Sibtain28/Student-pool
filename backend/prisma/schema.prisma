@@ -58,6 +58,10 @@ model Ride {
   rideMessages   RideMessage[]
   participants   RideParticipant[]
   reviews        RideReview[]
+   sourceLatitude  Float?    // Add this
+  sourceLongitude Float?    // Add this
+  destLatitude    Float?    // Add this
+  destLongitude   Float?    // Add this
 
   @@map("Ride")
 }

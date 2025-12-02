@@ -5,6 +5,25 @@ import "./App.css";
 
 // const API_URL = "http://localhost:4000/api/rides/create";
 const API_URL = "https://student-pool.onrender.com/api/rides/create";
+const getCoordinates = async (locationName) => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationName)}&format=json&limit=1`
+    );
+    const data = await response.json();
+    
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon)
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting coordinates:', error);
+    return null;
+  }
+};
 
 export default function CreateRide() {
   const navigate = useNavigate();
@@ -43,69 +62,92 @@ export default function CreateRide() {
   };
 
   const handleSubmit = async () => {
-    // Validation
-    if (!formData.destination || !formData.pickupPoint || !formData.date || 
-        !formData.time || !formData.totalCost || !formData.seatsAvailable) {
-      setError("Please fill in all required fields");
-      return;
-    }
+  // Validation
+  if (!formData.destination || !formData.pickupPoint || !formData.date || 
+      !formData.time || !formData.totalCost || !formData.seatsAvailable) {
+    setError("Please fill in all required fields");
+    return;
+  }
 
-    if (parseInt(formData.seatsAvailable) < 1) {
-      setError("At least 1 seat must be available");
-      return;
-    }
+  if (parseInt(formData.seatsAvailable) < 1) {
+    setError("At least 1 seat must be available");
+    return;
+  }
 
-    if (parseFloat(formData.totalCost) <= 0) {
-      setError("Total cost must be greater than 0");
-      return;
-    }
+  if (parseFloat(formData.totalCost) <= 0) {
+    setError("Total cost must be greater than 0");
+    return;
+  }
 
-    setLoading(true);
-    setError("");
+  setLoading(true);
+  setError("");
 
-    try {
-      const token = localStorage.getItem("token");
-      
-      // Combine date and time into a DateTime string
-      const dateTime = new Date(`${formData.date}T${formData.time}`).toISOString();
-      
-      // Calculate cost per person
-      const totalPeople = parseInt(formData.seatsAvailable) + 1; // +1 for driver
-      const costPerPerson = (parseFloat(formData.totalCost) / totalPeople).toFixed(2);
+  try {
+    const token = localStorage.getItem("token");
+    
+    // 🗺️ GET COORDINATES FOR PICKUP AND DESTINATION
+    console.log("Getting coordinates for pickup point:", formData.pickupPoint);
+    const sourceCoords = await getCoordinates(formData.pickupPoint);
+    
+    console.log("Getting coordinates for destination:", formData.destination);
+    const destCoords = await getCoordinates(formData.destination);
+    
+    console.log("Source coordinates:", sourceCoords);
+    console.log("Destination coordinates:", destCoords);
+    
+    // Combine date and time into a DateTime string
+    const dateTime = new Date(`${formData.date}T${formData.time}`).toISOString();
+    
+    // Calculate cost per person
+    const totalPeople = parseInt(formData.seatsAvailable) + 1; // +1 for driver
+    const costPerPerson = (parseFloat(formData.totalCost) / totalPeople).toFixed(2);
 
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          destination: formData.destination,
-          pickup_point: formData.pickupPoint,
-          date_time: dateTime,
-          total_cost: parseFloat(formData.totalCost),
-          seats_available: parseInt(formData.seatsAvailable),
-          total_seats: parseInt(formData.seatsAvailable),
-          cost_per_person: parseFloat(costPerPerson),
-          status: "active"
-        })
-      });
+    const rideData = {
+      destination: formData.destination,
+      pickup_point: formData.pickupPoint,
+      date_time: dateTime,
+      total_cost: parseFloat(formData.totalCost),
+      seats_available: parseInt(formData.seatsAvailable),
+      total_seats: parseInt(formData.seatsAvailable),
+      cost_per_person: parseFloat(costPerPerson),
+      status: "active",
+      // 🗺️ ADD COORDINATES
+      sourceLatitude: sourceCoords?.lat || null,
+      sourceLongitude: sourceCoords?.lng || null,
+      destLatitude: destCoords?.lat || null,
+      destLongitude: destCoords?.lng || null
+    };
 
-      const data = await response.json();
+    console.log("Sending ride data:", rideData);
 
-      if (response.ok) {
-        // Success - navigate to My Rides
-        navigate("/my-rides");
-      } else {
-        setError(data.message || "Failed to create ride. Please try again.");
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(rideData)
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // Show success message if coordinates were found
+      if (!sourceCoords || !destCoords) {
+        alert("Ride created successfully! Note: Map may not be available for this location.");
       }
-    } catch (err) {
-      console.error("Error creating ride:", err);
-      setError("Network error. Please check your connection and try again.");
-    } finally {
-      setLoading(false);
+      // Success - navigate to My Rides
+      navigate("/my-rides");
+    } else {
+      setError(data.message || "Failed to create ride. Please try again.");
     }
-  };
+  } catch (err) {
+    console.error("Error creating ride:", err);
+    setError("Network error. Please check your connection and try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleLogout = () => {
     localStorage.removeItem("token");

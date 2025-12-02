@@ -67,21 +67,21 @@ const authenticateToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    
+
     if (!decoded.id && !decoded.userId && !decoded.sub) {
       return res.status(403).json({ message: 'Invalid token: No user ID found' });
     }
-    
+
     req.user = {
       id: decoded.id || decoded.userId || decoded.sub,
       ...decoded
     };
-    
+
     next();
   } catch (err) {
-    return res.status(403).json({ 
+    return res.status(403).json({
       message: 'Invalid or expired token',
-      error: err.message 
+      error: err.message
     });
   }
 };
@@ -105,20 +105,44 @@ app.post("/api/auth/signup", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    
+
     const isRishihoodEmail = email.endsWith('@nst.rishihood.edu.in');
 
     // Create user without verified field for now
-    await prisma.user.create({
-      data: { 
-        name, 
-        email, 
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
         password: hashedPassword
         // verified: isRishihoodEmail  // ← COMMENT THIS OUT
       },
     });
 
-    const message = isRishihoodEmail 
+    // ✅ NEW: Backfill notifications for all active rides
+    try {
+      const activeRides = await prisma.ride.findMany({
+        where: { status: 'active' },
+        include: { creator: { select: { name: true } } }
+      });
+
+      if (activeRides.length > 0) {
+        const notifications = activeRides.map(ride => ({
+          userId: newUser.id,
+          rideId: ride.id,
+          type: 'new_ride',
+          message: `New ride from ${ride.source} to ${ride.destination} by ${ride.creator.name}`,
+          isRead: false
+        }));
+
+        await prisma.notification.createMany({ data: notifications });
+        console.log(`Created ${notifications.length} notifications for new user ${newUser.email}`);
+      }
+    } catch (notifError) {
+      console.error("Error creating initial notifications:", notifError);
+      // Don't fail signup if notifications fail
+    }
+
+    const message = isRishihoodEmail
       ? "Signup successful! Your account is verified. Please login."
       : "Signup successful. Please login.";
 
@@ -256,7 +280,11 @@ app.post('/api/rides/create', authenticateToken, async (req, res) => {
       date_time,
       seats_available,
       cost_per_person,
-      total_cost
+      total_cost,
+      sourceLatitude,
+      sourceLongitude,
+      destLatitude,
+      destLongitude
     } = req.body;
 
     const userExists = await prisma.user.findUnique({
@@ -275,11 +303,16 @@ app.post('/api/rides/create', authenticateToken, async (req, res) => {
     const costPerPerson = parseFloat(cost_per_person || 225);
     const totalCostCalc = parseFloat(total_cost || (costPerPerson * seatsInt));
 
+    // Create the ride
     const ride = await prisma.ride.create({
       data: {
         creatorId: req.user.id,
         destination: destination,
         source: pickup_point,
+        sourceLatitude: sourceLatitude ? parseFloat(sourceLatitude) : null,
+        sourceLongitude: sourceLongitude ? parseFloat(sourceLongitude) : null,
+        destLatitude: destLatitude ? parseFloat(destLatitude) : null,
+        destLongitude: destLongitude ? parseFloat(destLongitude) : null,
         dateTime: new Date(date_time),
         seats: seatsInt,
         seatsAvailable: seatsInt,
@@ -289,25 +322,46 @@ app.post('/api/rides/create', authenticateToken, async (req, res) => {
       }
     });
 
-    // Notify all other users
-    const allUsers = await prisma.user.findMany({
-      where: { id: { not: req.user.id } }
+    // ✅ CREATE NOTIFICATIONS FOR ALL OTHER USERS
+    try {
+      // Get all users except the ride creator
+      const allUsers = await prisma.user.findMany({
+        where: {
+          id: { not: req.user.id }
+        },
+        select: { id: true }
+      });
+
+      if (allUsers.length > 0) {
+        // Create notification data for all users
+        const notifications = allUsers.map(user => ({
+          userId: user.id,
+          rideId: ride.id,
+          type: 'new_ride',
+          message: `New ride available: ${ride.source} to ${ride.destination} on ${new Date(ride.dateTime).toLocaleDateString()}`,
+          isRead: false
+        }));
+
+        // Bulk create all notifications
+        await prisma.notification.createMany({
+          data: notifications
+        });
+
+        console.log(`✅ Created ${notifications.length} notifications for new ride ${ride.id}`);
+      }
+    } catch (notificationError) {
+      // Log the error but don't fail the ride creation
+      console.error('Error creating notifications:', notificationError);
+    }
+
+    res.status(201).json({ 
+      success: true,
+      message: 'Ride created successfully', 
+      ride 
     });
-
-    const notifications = allUsers.map(user => ({
-      userId: user.id,
-      rideId: ride.id,
-      type: 'new_ride',
-      message: `New ride from ${pickup_point} to ${destination} by ${userExists.name}`,
-      isRead: false
-    }));
-
-    await prisma.notification.createMany({ data: notifications });
-
-    res.status(201).json({ message: 'Ride created successfully', ride });
   } catch (error) {
     console.error('Error creating ride:', error);
-    res.status(500).json({ message: 'Failed to create ride' });
+    res.status(500).json({ message: 'Failed to create ride', error: error.message });
   }
 });
 
@@ -319,7 +373,11 @@ app.get('/api/rides/my-rides', authenticateToken, async (req, res) => {
       where: { creatorId: userId },
       include: {
         creator: { select: { id: true, name: true, email: true } },
-        participants: true
+        participants: {
+          include: {
+            user: { select: { id: true, name: true, email: true } }
+          }
+        }
       },
       orderBy: { dateTime: 'desc' }
     });
@@ -330,23 +388,34 @@ app.get('/api/rides/my-rides', authenticateToken, async (req, res) => {
       },
       include: {
         creator: { select: { id: true, name: true, email: true } },
-        participants: true
+        participants: {
+          include: {
+            user: { select: { id: true, name: true, email: true } }
+          }
+        }
       },
       orderBy: { dateTime: 'desc' }
     });
 
-    const formatRide = (ride) => ({
-      id: ride.id,
-      destination: ride.destination,
-      pickup_point: ride.source,
-      date_time: ride.dateTime,
-      seats_available: ride.seatsAvailable,
-      total_seats: ride.seats,
-      cost_per_person: ride.costPerPerson,
-      total_cost: ride.totalCost,
-      status: ride.status,
-      creator: ride.creator
-    });
+    const formatRide = (ride) => {
+      const isCreatorVerified = ride.creator.email.endsWith('@nst.rishihood.edu.in');
+
+      return {
+        id: ride.id,
+        destination: ride.destination,
+        pickup_point: ride.source,
+        date_time: ride.dateTime,
+        seats_available: ride.seatsAvailable,
+        total_seats: ride.seats,
+        cost_per_person: ride.costPerPerson,
+        total_cost: ride.totalCost,
+        status: ride.status,
+        creator: {
+          ...ride.creator,
+          verified: isCreatorVerified  // ✅ Add this
+        }
+      };
+    };
 
     res.json({
       created: createdRides.map(formatRide),
@@ -388,23 +457,34 @@ app.get('/api/rides/available', authenticateToken, async (req, res) => {
       where,
       include: {
         creator: { select: { id: true, name: true, email: true } },
-        participants: true
+        participants: {
+          include: {
+            user: { select: { id: true, name: true, email: true } }
+          }
+        }
       },
       orderBy: { dateTime: 'asc' }
     });
 
-    const formatRide = (ride) => ({
-      id: ride.id,
-      destination: ride.destination,
-      pickup_point: ride.source,
-      date_time: ride.dateTime,
-      seats_available: ride.seatsAvailable,
-      total_seats: ride.seats,
-      cost_per_person: ride.costPerPerson,
-      total_cost: ride.totalCost,
-      status: ride.status,
-      creator: ride.creator
-    });
+    const formatRide = (ride) => {
+      const isCreatorVerified = ride.creator.email.endsWith('@nst.rishihood.edu.in');
+
+      return {
+        id: ride.id,
+        destination: ride.destination,
+        pickup_point: ride.source,
+        date_time: ride.dateTime,
+        seats_available: ride.seatsAvailable,
+        total_seats: ride.seats,
+        cost_per_person: ride.costPerPerson,
+        total_cost: ride.totalCost,
+        status: ride.status,
+        creator: {
+          ...ride.creator,
+          verified: isCreatorVerified  // ✅ Add this
+        }
+      };
+    };
 
     res.json({ rides: availableRides.map(formatRide) });
   } catch (error) {
@@ -426,10 +506,22 @@ app.get('/api/rides/:rideId', authenticateToken, async (req, res) => {
     const ride = await prisma.ride.findUnique({
       where: { id: rideIdInt },
       include: {
-        creator: { select: { id: true, name: true, email: true } },
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
         participants: {
           include: {
-            user: { select: { id: true, name: true, email: true } }
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            }
           }
         }
       }
@@ -441,26 +533,37 @@ app.get('/api/rides/:rideId', authenticateToken, async (req, res) => {
 
     const isCreator = ride.creatorId === userId;
     const hasJoined = ride.participants.some(p => p.userId === userId);
+    const isCreatorVerified = ride.creator.email.endsWith('@nst.rishihood.edu.in');
 
     const formattedRide = {
       id: ride.id,
       destination: ride.destination,
       pickup_point: ride.source,
+      sourceLatitude: ride.sourceLatitude,     // Add these
+      sourceLongitude: ride.sourceLongitude,   // Add these
+      destLatitude: ride.destLatitude,         // Add these
+      destLongitude: ride.destLongitude,       // Add these
       date_time: ride.dateTime,
       seats_available: ride.seatsAvailable,
       total_seats: ride.seats,
       cost_per_person: ride.costPerPerson,
       total_cost: ride.totalCost,
       status: ride.status,
-      creator: ride.creator,
-      participants: ride.participants.map(p => ({
-        id: p.userId,
-        participant_record_id: p.id,
-        name: p.user.name,
-        email: p.user.email,
-        is_verified: false,
-        joinedAt: p.joinedAt
-      })),
+      creator: {
+        ...ride.creator,
+        verified: isCreatorVerified
+      },
+      participants: ride.participants.map(p => {
+        const isParticipantVerified = p.user.email.endsWith('@nst.rishihood.edu.in');
+        return {
+          id: p.userId,
+          participant_record_id: p.id,
+          name: p.user.name,
+          email: p.user.email,
+          is_verified: isParticipantVerified,
+          joinedAt: p.joinedAt
+        };
+      }),
       isCreator,
       hasJoined
     };
@@ -479,39 +582,29 @@ app.get('/api/rides/:rideId', authenticateToken, async (req, res) => {
 // GET JOIN STATUS - FIXED
 app.get('/api/rides/:rideId/join-status', authenticateToken, async (req, res) => {
   try {
-    const rideIdInt = parseInt(req.params.rideId);
+    const { rideId } = req.params;
     const userId = req.user.id;
+    const rideIdInt = parseInt(rideId, 10);
 
-    console.log('=== Check Join Status ===');
-    console.log('Ride ID:', rideIdInt);
-    console.log('User ID:', userId);
-
-    // Check if user is a participant
-    const isParticipant = await prisma.rideParticipant.findFirst({
-      where: { rideId: rideIdInt, userId: userId }
-    });
-
-    if (isParticipant) {
-      console.log('User is a participant');
-      return res.json({ status: 'accepted' });
+    if (isNaN(rideIdInt)) {
+      return res.status(400).json({ message: 'Invalid ride ID' });
     }
 
-    // Check for join request
     const joinRequest = await prisma.rideJoinRequest.findFirst({
-      where: { rideId: rideIdInt, requesterId: userId },
-      orderBy: { createdAt: 'desc' }
+      where: {
+        rideId: rideIdInt,
+        requesterId: userId
+      }
     });
 
     if (!joinRequest) {
-      console.log('No join request found');
       return res.json({ status: null });
     }
 
-    console.log('Join request status:', joinRequest.status);
     res.json({ status: joinRequest.status });
   } catch (error) {
-    console.error('Error checking join status:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error fetching join status:', error);
+    res.status(500).json({ message: 'Failed to fetch join status' });
   }
 });
 
@@ -552,9 +645,9 @@ app.post('/api/rides/:rideId/join', authenticateToken, async (req, res) => {
     });
 
     if (existingRequest) {
-      return res.status(400).json({ 
-        message: existingRequest.status === 'pending' 
-          ? 'You already have a pending request' 
+      return res.status(400).json({
+        message: existingRequest.status === 'pending'
+          ? 'You already have a pending request'
           : 'You have already joined this ride'
       });
     }
@@ -585,8 +678,8 @@ app.post('/api/rides/:rideId/join', authenticateToken, async (req, res) => {
     });
 
     console.log('Join request created successfully');
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Join request sent successfully!',
       status: 'pending'
     });
@@ -626,10 +719,10 @@ app.get('/api/notifications', authenticateToken, async (req, res) => {
 
     // Filter logic
     const acceptedJoinRequests = new Map();
-    
+
     notifications.forEach(notif => {
-      if ((notif.type === 'participant_joined' || notif.type === 'request_accepted') 
-          && notif.rideId && notif.requesterId) {
+      if ((notif.type === 'participant_joined' || notif.type === 'request_accepted')
+        && notif.rideId && notif.requesterId) {
         const key = `${notif.rideId}-${notif.requesterId}`;
         acceptedJoinRequests.set(key, true);
       }
@@ -638,7 +731,7 @@ app.get('/api/notifications', authenticateToken, async (req, res) => {
     const filteredNotifications = notifications.filter(notif => {
       if (notif.type !== 'join_request') return true;
       if (!notif.rideId || !notif.requesterId) return false;
-      
+
       const key = `${notif.rideId}-${notif.requesterId}`;
       return !acceptedJoinRequests.has(key);
     });
@@ -830,12 +923,12 @@ app.post('/api/notifications/:id/decline', authenticateToken, async (req, res) =
 app.put('/api/notifications/:id/read', authenticateToken, async (req, res) => {
   try {
     const notificationId = parseInt(req.params.id);
-    
+
     await prisma.notification.update({
       where: { id: notificationId },
       data: { isRead: true }
     });
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error marking as read:', error);
@@ -962,15 +1055,15 @@ app.delete('/api/rides/:rideId/participants/:participantId', authenticateToken, 
     });
 
     console.log('Participant removed successfully');
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Participant removed successfully'
     });
   } catch (error) {
     console.error('Error removing participant:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to remove participant',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -1031,15 +1124,15 @@ app.delete('/api/rides/:rideId', authenticateToken, async (req, res) => {
     });
 
     console.log('Ride deleted successfully');
-    res.json({ 
-      success: true, 
-      message: 'Ride deleted successfully' 
+    res.json({
+      success: true,
+      message: 'Ride deleted successfully'
     });
   } catch (error) {
     console.error('Error deleting ride:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to delete ride',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -1048,20 +1141,20 @@ app.patch('/api/rides/:rideId/end', authenticateToken, async (req, res) => {
   try {
     const rideIdInt = parseInt(req.params.rideId);
     const ride = await prisma.ride.findUnique({ where: { id: rideIdInt } });
-    
+
     if (!ride) {
       return res.status(404).json({ message: 'Ride not found' });
     }
-    
+
     if (ride.creatorId !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized' });
     }
-    
+
     const updatedRide = await prisma.ride.update({
       where: { id: rideIdInt },
       data: { status: 'completed' }
     });
-    
+
     res.json({ message: 'Ride ended', ride: updatedRide });
   } catch (error) {
     console.error('Error:', error);

@@ -8,10 +8,14 @@ export default function RideChat({ rideId, currentUserId, currentUserName }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [socket, setSocket] = useState(null);
-  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setTimeout(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    }, 100);
   };
 
   useEffect(() => {
@@ -44,7 +48,7 @@ export default function RideChat({ rideId, currentUserId, currentUserName }) {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    
+
     if (!newMessage.trim() || !socket) return;
 
     socket.emit("send_message", {
@@ -74,7 +78,7 @@ export default function RideChat({ rideId, currentUserId, currentUserName }) {
         <h2>Ride Chat</h2>
       </div>
 
-      <div className="chat-messages">
+      <div className="chat-messages" ref={chatContainerRef}>
         {messages.length === 0 ? (
           <div className="chat-empty">
             <p>No messages yet. Start the conversation!</p>
@@ -82,13 +86,12 @@ export default function RideChat({ rideId, currentUserId, currentUserName }) {
         ) : (
           messages.map((msg, index) => {
             const isOwnMessage = msg.userId === currentUserId;
-            
+
             return (
               <div
                 key={index}
-                className={`chat-message ${
-                  isOwnMessage ? "chat-message-own" : "chat-message-other"
-                }`}
+                className={`chat-message ${isOwnMessage ? "chat-message-own" : "chat-message-other"
+                  }`}
               >
                 <div className="chat-message-header">
                   <span className="chat-message-author">
@@ -101,7 +104,6 @@ export default function RideChat({ rideId, currentUserId, currentUserName }) {
             );
           })
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <form onSubmit={handleSendMessage} className="chat-input-container">

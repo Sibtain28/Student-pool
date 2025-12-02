@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./App.css";
 import RideChat from "./RideChat";
-
+import RideMap from './RideMap';
 
 
 export default function RideDetails() {
@@ -16,59 +16,87 @@ export default function RideDetails() {
   const [joinRequestStatus, setJoinRequestStatus] = useState(null); // 'pending', 'accepted', 'declined', null
   const [removingParticipant, setRemovingParticipant] = useState(null);
   const [notificationCount, setNotificationCount] = useState(0);
-  
+
 
 
   // const API_URL = "http://localhost:4000";
   const API_URL = "https://student-pool.onrender.com";
+
+
 
   useEffect(() => {
     // Get user ID from token instead of API call
     const userId = getCurrentUserIdFromToken();
     console.log("User ID from token:", userId); // DEBUG
     setCurrentUserId(userId);
-    
+
     fetchRideDetails();
-    
+
     // Check join request status if user exists
     if (userId) {
       checkJoinRequestStatus();
     }
   }, [rideId]);
+
   useEffect(() => {
-  // Initial load of notification count
-  const count = localStorage.getItem('unreadNotificationCount');
-  setNotificationCount(count ? parseInt(count) : 0);
-  
-  // Listen for updates from Notifications page
-  const handleUpdate = () => {
-    const updatedCount = localStorage.getItem('unreadNotificationCount');
-    setNotificationCount(updatedCount ? parseInt(updatedCount) : 0);
-  };
-  
-  window.addEventListener('notificationCountUpdated', handleUpdate);
-  
-  return () => {
-    window.removeEventListener('notificationCountUpdated', handleUpdate);
-  };
-}, []);
+    // Initial load of notification count
+    const count = localStorage.getItem('unreadNotificationCount');
+    setNotificationCount(count ? parseInt(count) : 0);
+
+    // Listen for updates from Notifications page
+    const handleUpdate = () => {
+      const updatedCount = localStorage.getItem('unreadNotificationCount');
+      setNotificationCount(updatedCount ? parseInt(updatedCount) : 0);
+    };
+
+    window.addEventListener('notificationCountUpdated', handleUpdate);
+
+    return () => {
+      window.removeEventListener('notificationCountUpdated', handleUpdate);
+    };
+  }, []);
+  // Add this new useEffect in RideDetails component
+  useEffect(() => {
+    const handleFocus = () => {
+      // Refetch ride details when user comes back to this page
+      fetchRideDetails();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    // Also listen for profile updates
+    const handleProfileUpdate = () => {
+      fetchRideDetails();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, [rideId]);
+
+
+
+
 
 
   const getCurrentUserIdFromToken = () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return null;
-      
+
       // JWT tokens are in format: header.payload.signature
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
-      
+
       const decoded = JSON.parse(jsonPayload);
       console.log("Decoded JWT token:", decoded); // DEBUG - see what's inside
-      
+
       // Return the user ID - check what field your JWT uses
       return decoded.userId || decoded.id || decoded.user_id || decoded.sub;
     } catch (error) {
@@ -77,37 +105,37 @@ export default function RideDetails() {
     }
   };
   const handleRemoveParticipant = async (participantId) => {
-  if (!window.confirm('Are you sure you want to remove this participant?')) {
-    return;
-  }
-
-  try {
-    setRemovingParticipant(participantId);
-    const token = localStorage.getItem("token");
-    
-    const response = await fetch(`${API_URL}/api/rides/${rideId}/participants/${participantId}`, {
-      method: 'DELETE',
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to remove participant');
+    if (!window.confirm('Are you sure you want to remove this participant?')) {
+      return;
     }
 
-    // Refresh ride details
-    await fetchRideDetails();
-    alert('Participant removed successfully');
-  } catch (error) {
-    console.error('Error removing participant:', error);
-    alert(error.message || 'Failed to remove participant');
-  } finally {
-    setRemovingParticipant(null);
-  }
-};
+    try {
+      setRemovingParticipant(participantId);
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${API_URL}/api/rides/${rideId}/participants/${participantId}`, {
+        method: 'DELETE',
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to remove participant');
+      }
+
+      // Refresh ride details
+      await fetchRideDetails();
+      alert('Participant removed successfully');
+    } catch (error) {
+      console.error('Error removing participant:', error);
+      alert(error.message || 'Failed to remove participant');
+    } finally {
+      setRemovingParticipant(null);
+    }
+  };
 
   const checkJoinRequestStatus = async () => {
     try {
@@ -226,7 +254,7 @@ export default function RideDetails() {
   };
 
   const getStatusStyle = (status) => {
-    switch(status) {
+    switch (status) {
       case 'completed':
         return { background: '#d1fae5', color: '#10b981' };
       case 'cancelled':
@@ -260,16 +288,16 @@ export default function RideDetails() {
             </button>
             <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
               Notifications
-            {notificationCount > 0 && (
-            <span className="notification-badge">{notificationCount}</span>
-            )}
+              {notificationCount > 0 && (
+                <span className="notification-badge">{notificationCount}</span>
+              )}
             </button>
-             <button 
-  className="nav-item"
-  onClick={() => navigate("/profile")}
->
-  Profile
-</button>
+            <button
+              className="nav-item"
+              onClick={() => navigate("/profile")}
+            >
+              Profile
+            </button>
             <button className="nav-item logout-btn" onClick={handleLogout}>
               Logout
             </button>
@@ -306,12 +334,12 @@ export default function RideDetails() {
             <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
               Notifications
             </button>
-            <button 
-  className="nav-item"
-  onClick={() => navigate("/profile")}
->
-  Profile
-</button>
+            <button
+              className="nav-item"
+              onClick={() => navigate("/profile")}
+            >
+              Profile
+            </button>
             <button className="nav-item logout-btn" onClick={handleLogout}>
               Logout
             </button>
@@ -328,59 +356,64 @@ export default function RideDetails() {
     );
   }
 
-if (!isCreator) {
-  // Check if user is in participants list (AFTER we know ride exists)
-  const isParticipant = ride?.participants?.some(p => p.id === currentUserId) || false;
-  
-  return (
-    <div className="ride-details-container">
-      <header className="dashboard-header">
-        <div className="dashboard-logo">
-          <div className="logo-circle">
-            <span className="logo-icon">🚗</span>
-          </div>
-          <span className="logo-text">Student Pool</span>
-        </div>
+  if (!isCreator) {
+    // Check if user is in participants list (AFTER we know ride exists)
+    const isParticipant = ride?.participants?.some(p => p.id === currentUserId) || false;
 
-        <nav className="dashboard-nav">
-          <button className="nav-item" onClick={() => navigate("/find-rides")}>
-            Find Rides
-          </button>
-          <button className="nav-item" onClick={() => navigate("/create-ride")}>
-            Create
-          </button>
-          <button className="nav-item" onClick={() => navigate("/my-rides")}>
-            My Rides
-          </button>
-          <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
-            Notifications
-          </button>
-          <button className="nav-item">Profile</button>
-          <button className="nav-item logout-btn" onClick={handleLogout}>
-            Logout
-          </button>
-        </nav>
-      </header>
-
-      <div className="ride-details-content">
-        <div className="ride-details-joiner-layout">
-          <div className="ride-joiner-main-card">
-            <div className="ride-joiner-header">
-              <div className="location-badge">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-              </div>
-              <h1 className="ride-joiner-destination">{ride.destination}</h1>
-              <p className="ride-joiner-from">From: {ride.pickup_point}</p>
-              <span 
-                className="ride-status-badge-joiner"
-                style={getStatusStyle(ride.status)}
-              >
-                {ride.status}
-              </span>
+    return (
+      <div className="ride-details-container">
+        <header className="dashboard-header">
+          <div className="dashboard-logo" onClick={() => navigate("/dashboard")} style={{ cursor: "pointer" }}>
+            <div className="logo-circle">
+              <span className="logo-icon">🚗</span>
             </div>
+            <span className="logo-text">Student Pool</span>
+          </div>
+
+          <nav className="dashboard-nav">
+            <button className="nav-item" onClick={() => navigate("/find-rides")}>
+              Find Rides
+            </button>
+            <button className="nav-item" onClick={() => navigate("/create-ride")}>
+              Create
+            </button>
+            <button className="nav-item" onClick={() => navigate("/my-rides")}>
+              My Rides
+            </button>
+            <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
+              Notifications
+            </button>
+            <button
+              className="nav-item"
+              onClick={() => navigate("/profile")}
+            >
+              Profile
+            </button>
+            <button className="nav-item logout-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </nav>
+        </header>
+
+        <div className="ride-details-content">
+          <div className="ride-details-joiner-layout">
+            <div className="ride-joiner-main-card">
+              <div className="ride-joiner-header">
+                <div className="location-badge">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </div>
+                <h1 className="ride-joiner-destination">{ride.destination}</h1>
+                <p className="ride-joiner-from">From: {ride.pickup_point}</p>
+                <span
+                  className="ride-status-badge-joiner"
+                  style={getStatusStyle(ride.status)}
+                >
+                  {ride.status}
+                </span>
+              </div>
 
               <div className="ride-joiner-info-grid">
                 <div className="joiner-info-box">
@@ -430,62 +463,61 @@ if (!isCreator) {
                 </div>
               </div>
 
+              {/* Map Display */}
+              {ride.sourceLatitude && ride.sourceLongitude && ride.destLatitude && ride.destLongitude && (
+                <RideMap
+                  origin={{
+                    lat: ride.sourceLatitude,
+                    lng: ride.sourceLongitude
+                  }}
+                  destination={{
+                    lat: ride.destLatitude,
+                    lng: ride.destLongitude
+                  }}
+                  fromLocation={ride.pickup_point}
+                  toLocation={ride.destination}
+                />
+              )}
+
               {/* Join Request Status Banner or Button */}
               {isParticipant ? (
-              <div className="request-accepted-banner">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-                <span>✅ You're in this ride!</span>
-              </div>
-            ) : joinRequestStatus === 'pending' ? (
-              <div className="request-pending-banner">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                <span>⏳ Request Pending - Waiting for approval</span>
-              </div>
-            ) : (joinRequestStatus === 'declined' || (joinRequestStatus === 'accepted' && !isParticipant)) ? (
-              <div className="request-declined-banner">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="15" y1="9" x2="9" y2="15"></line>
-                  <line x1="9" y1="9" x2="15" y2="15"></line>
-                </svg>
-                <span>
-                   {joinRequestStatus === 'declined' 
-                    ? 'Request Declined' 
-                    : 'You have been removed from this ride'}
-                </span>
-              </div>
-            ) : (
-              <button 
-                className="join-ride-btn-large"
-                onClick={handleJoinRide}
-                disabled={joiningRide || ride.seats_available === 0}
-              >
-                {joiningRide ? "Sending Request..." : ride.seats_available === 0 ? "Ride Full" : "Request to Join"}
-              </button>
-            )}
-              <div className="alternative-rides-section">
-                <p className="alternative-title">Book alternative ride:</p>
-                <div className="alternative-buttons">
-                  <button className="alternative-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                    Book on Ola
-                  </button>
-                  <button className="alternative-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                    Book on Uber
-                  </button>
+                <div className="request-accepted-banner">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  <span>✅ You're in this ride!</span>
                 </div>
-              </div>
+              ) : joinRequestStatus === 'pending' ? (
+                <div className="request-pending-banner">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span>⏳ Request Pending - Waiting for approval</span>
+                </div>
+              ) : (joinRequestStatus === 'declined' || (joinRequestStatus === 'accepted' && !isParticipant)) ? (
+                <div className="request-declined-banner">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                  <span>
+                    {joinRequestStatus === 'declined'
+                      ? 'Request Declined'
+                      : 'You have been removed from this ride'}
+                  </span>
+                </div>
+              ) : (
+                <button
+                  className="join-ride-btn-large"
+                  onClick={handleJoinRide}
+                  disabled={joiningRide || ride.seats_available === 0}
+                >
+                  {joiningRide ? "Sending Request..." : ride.seats_available === 0 ? "Ride Full" : "Request to Join"}
+                </button>
+              )}
             </div>
 
             <div className="ride-joiner-sidebar">
@@ -503,42 +535,36 @@ if (!isCreator) {
                     <p className="creator-school">Newton School</p>
                   </div>
                 </div>
-                {ride.creator?.verified ? (
-  <div className="verified-badge-large">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    Verified User
-  </div>
-) : (
-  <div className="unverified-badge-large">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" />
-    </svg>
-    Unverified User
-  </div>
-)}
+
               </div>
               {isParticipant && currentUserId && (
-              <RideChat 
-                rideId={rideId}
-                currentUserId={currentUserId}
-                currentUserName={ride.participants.find(p => p.id === currentUserId)?.name || "User"}
-              />
-            )}
+                <RideChat
+                  rideId={rideId}
+                  currentUserId={currentUserId}
+                  currentUserName={ride.participants.find(p => p.id === currentUserId)?.name || "User"}
+                />
+              )}
             </div>
           </div>
         </div>
       </div>
     );
   }
+  // Add these functions inside the RideDetails component, before the return statement
+  const handleBookOla = () => {
+    window.open('https://www.olacabs.com/', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleBookUber = () => {
+    window.open('https://www.uber.com/in/en/', '_blank', 'noopener,noreferrer');
+  };
 
   // Render for CREATOR
   return (
-    
+
     <div className="ride-details-container">
       <header className="dashboard-header">
-        <div className="dashboard-logo">
+        <div className="dashboard-logo" onClick={() => navigate("/dashboard")} style={{ cursor: "pointer" }}>
           <div className="logo-circle">
             <span className="logo-icon">🚗</span>
           </div>
@@ -558,12 +584,12 @@ if (!isCreator) {
           <button className="nav-item notification-btn" onClick={() => navigate("/notifications")}>
             Notifications
           </button>
-           <button 
-  className="nav-item"
-  onClick={() => navigate("/profile")}
->
-  Profile
-</button>
+          <button
+            className="nav-item"
+            onClick={() => navigate("/profile")}
+          >
+            Profile
+          </button>
           <button className="nav-item logout-btn" onClick={handleLogout}>
             Logout
           </button>
@@ -585,7 +611,7 @@ if (!isCreator) {
                   <h1 className="ride-details-destination">{ride.destination}</h1>
                   <p className="ride-details-from">From: {ride.pickup_point}</p>
                 </div>
-                <span 
+                <span
                   className="ride-status-badge-large"
                   style={getStatusStyle(ride.status)}
                 >
@@ -647,17 +673,37 @@ if (!isCreator) {
               </button>
 
               <div className="alternative-rides-section">
+                {ride.sourceLatitude && ride.sourceLongitude && ride.destLatitude && ride.destLongitude && (
+                  <RideMap
+                    origin={{
+                      lat: ride.sourceLatitude,
+                      lng: ride.sourceLongitude
+                    }}
+                    destination={{
+                      lat: ride.destLatitude,
+                      lng: ride.destLongitude
+                    }}
+                    fromLocation={ride.pickup_point}
+                    toLocation={ride.destination}
+                  />
+                )}
                 <p className="alternative-title">Book alternative ride:</p>
                 <div className="alternative-buttons">
-                  <button className="alternative-btn">
+                  <button
+                    className="alternative-btn"
+                    onClick={handleBookOla}
+                  >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                      <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                     Book on Ola
                   </button>
-                  <button className="alternative-btn">
+                  <button
+                    className="alternative-btn"
+                    onClick={handleBookUber}
+                  >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                      <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                     Book on Uber
                   </button>
@@ -665,12 +711,12 @@ if (!isCreator) {
               </div>
             </div>
 
-            <RideChat 
-  rideId={rideId}
-  currentUserId={currentUserId}
-  currentUserName={ride.creator.name}
-/>
-</div>
+            <RideChat
+              rideId={rideId}
+              currentUserId={currentUserId}
+              currentUserName={ride.creator.name}
+            />
+          </div>
 
           <div className="ride-details-sidebar">
             <div className="creator-card">
@@ -688,20 +734,20 @@ if (!isCreator) {
                 </div>
               </div>
               {ride.creator?.verified ? (
-  <div className="verified-badge-large">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    Verified User
-  </div>
-) : (
-  <div className="unverified-badge-large">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" />
-    </svg>
-    Unverified User
-  </div>
-)}
+                <div className="verified-badge-large">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Verified User
+                </div>
+              ) : (
+                <div className="unverified-badge-large">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                  </svg>
+                  Unverified User
+                </div>
+              )}
             </div>
 
             {/* Participants List */}
@@ -727,12 +773,12 @@ if (!isCreator) {
                           </p>
                           <p className="participant-school">Newton School</p>
                           <div className="participant-verified">
-  {participant.is_verified ? (
-    <span className="verified-text">✓ Verified User</span>
-  ) : (
-    <span className="unverified-text">○ Unverified User</span>
-  )}
-</div>
+                            {participant.is_verified ? (
+                              <span className="verified-text">✓ Verified User</span>
+                            ) : (
+                              <span className="unverified-text">○ Unverified User</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       {String(participant.id) !== String(ride.creator.id) && (
@@ -750,7 +796,7 @@ if (!isCreator) {
               </div>
             )}
           </div>
-          
+
 
           <div className="ride-details-sidebar">
             <div className="creator-card">
@@ -768,20 +814,20 @@ if (!isCreator) {
                 </div>
               </div>
               {ride.creator?.verified ? (
-  <div className="verified-badge-large">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-  Verified User
-</div>
-) : (
-  <div className="unverified-badge-large">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" />
-    </svg>
-    Unverified User
-  </div>
-)}
+                <div className="verified-badge-large">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Verified User
+                </div>
+              ) : (
+                <div className="unverified-badge-large">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                  </svg>
+                  Unverified User
+                </div>
+              )}
             </div>
           </div>
         </div>
